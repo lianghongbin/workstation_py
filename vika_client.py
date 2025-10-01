@@ -8,12 +8,15 @@ class VikaClient:
         self.datasheet_id = datasheet_id
         self.view_id = view_id
         self.base_url = f"https://api.vika.cn/fusion/v1/datasheets/{datasheet_id}/records"
+        self.attachment_url = f"https://api.vika.cn/fusion/v1/datasheets/{datasheet_id}/attachments"
 
-    def _headers(self):
-        return {
+    def _headers(self, is_json=True):
+        headers = {
             "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/json",
         }
+        if is_json:
+            headers["Content-Type"] = "application/json"
+        return headers
 
     def add_record(self, fields: dict):
         fields_mapped = translate_fields(self.datasheet_id, fields, direction="en2zh")
@@ -76,3 +79,65 @@ class VikaClient:
             "data": records,
             "total": data.get("data").get("total")
         }
+
+    #文件上传
+    def upload_attachment(self, file_path: str) -> dict:
+        """
+        上传附件到 Vika datasheet，返回文件信息
+        """
+        with open(file_path, "rb") as f:
+            files = {"file": f}
+            resp = requests.post(self.attachment_url, headers=self._headers(False), files=files, timeout=30)
+
+        result = resp.json()
+        if not resp.ok or not result.get("success"):
+            raise RuntimeError(f"附件上传失败: {resp.status_code}, {result}")
+
+        # data 是一个 list，取第一个文件
+        return result["data"]
+
+
+    #上传附件，并直接绑定到收货记录上
+    def update_record_with_attachment(self, record_id: str, field_name: str, file_path: str) -> dict:
+        """
+        上传附件并追加到指定记录的字段（保留已有附件，如果没有就新建数组）
+        """
+        # 1. 上传新附件
+        file_info = self.upload_attachment(file_path)
+
+        # 2. 查询现有记录
+        query_url = f"{self.base_url}?recordIds={record_id}&fieldKey=name"
+        resp = requests.get(query_url, headers=self._headers(), timeout=10)
+        data = resp.json()
+        if not resp.ok or not data.get("success"):
+            raise RuntimeError(f"查询记录失败: {resp.status_code}, {data}")
+
+        records = data["data"].get("records", [])
+        if not records:
+            raise ValueError(f"未找到记录: {record_id}")
+
+        old_fields = records[0].get("fields", {})
+        # ⚡ 如果原来没有这个字段，默认空数组就行
+        old_attachments = old_fields.get(field_name, []) or []
+
+        # 3. 合并旧附件 + 新附件
+        new_attachments = old_attachments + [file_info]
+
+        # 4. 更新记录
+        payload = {
+            "records": [
+                {
+                    "recordId": record_id,
+                    "fields": {
+                        field_name: new_attachments
+                    }
+                }
+            ]
+        }
+
+        resp = requests.patch(self.base_url, headers=self._headers(False), json=payload, timeout=30)
+        result = resp.json()
+        if not resp.ok or not result.get("success"):
+            raise RuntimeError(f"更新记录失败: {resp.status_code}, {result}")
+
+        return {"success": True, "message": "文件追加成功", "data": result.get("data")}
