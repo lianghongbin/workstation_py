@@ -12,7 +12,7 @@ vika = VikaClient("dstl0nkkjrg2hlXfRk")
 def ship_processed_page():
     page = int(request.args.get("page", 1))
     search = request.args.get("search", "").strip()
-    page_size = 2
+    page_size = 15
 
     params = {
         "pageNum": page,
