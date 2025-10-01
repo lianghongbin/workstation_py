@@ -19,8 +19,7 @@ class PrintService:
             # 1. 渲染 HTML
             template = self.env.get_template("label.html")
             html_content = template.render(record=record["record"])
-            print(html_content)
-            return;
+
             # 2. 生成 PDF 文件
             pdf_file = os.path.join(os.path.dirname(__file__), "label.pdf")
             HTML(string=html_content).write_pdf(pdf_file)

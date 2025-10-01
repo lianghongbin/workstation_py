@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>出货申请查询</title>
     <link rel="stylesheet" href="static/ship-query.css">
+    <link rel="stylesheet" href="static/pagination.css">
 </head>
 <body>
 <div class="query-container">
@@ -23,10 +24,57 @@
         <th>面单操作</th>
     </tr>
     </thead>
-    <tbody></tbody>
+    <tbody>
+    {% for r in records %}
+    <tr data-id="{{ r.recordId }}">
+        <td>{{ r.barcode }}</td>
+        <td>{{ r.cartons }}</td>
+        <td>{{ r.qty }}</td>
+        <td>{{ r.createdAt }}</td>
+        <td>
+            {% for lbl in r.changeLabels %}
+            <a href="{{ lbl.url }}" target="_blank">{{ lbl.name }}</a><br>
+            {% endfor %}
+        </td>
+        <td>
+            {% for lbl in r.fbaLabels %}
+            <a href="{{ lbl.url }}" target="_blank">{{ lbl.name }}</a><br>
+            {% endfor %}
+        </td>
+        <td>
+            <a href="javascript:void(0)" onclick="handleClick('view', this)">查看</a>&nbsp;
+            <a href="javascript:void(0)" onclick="handleClick('print', this)">打印</a>&nbsp;
+            <a href="javascript:void(0)" onclick="handleClick('ship', this)">处理完成</a>
+        </td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="7">没有已处理的出货申请</td>
+    </tr>
+    {% endfor %}
+    </tbody>
 </table>
 
-<div id="pagination"></div>
+<div class="pagination">
+    {% set qargs = query_args or {} %}
+
+    {# 上一页 #}
+    {% if page > 1 %}
+    <a href="{{ url_for('ship_query.ship_page', page=page-1, **qargs) }}">上一页</a>
+    {% else %}
+    <span class="disabled">上一页</span>
+    {% endif %}
+
+    {# 当前页/总页数 #}
+    <span>第 {{ page }} / {{ total_pages }} 页 (共 {{ total }} 条)</span>
+
+    {# 下一页 #}
+    {% if page < total_pages %}
+    <a href="{{ url_for('ship_query.ship_page', page=page+1, **qargs) }}">下一页</a>
+    {% else %}
+    <span class="disabled">下一页</span>
+    {% endif %}
+</div>
 
 <!-- ✅ 覆盖层 -->
 <div id="overlay">
@@ -38,7 +86,11 @@
         <button class="print-btn" onclick="printLabel()">打印面单</button>
     </div>
 </div>
-
+<script>
+  window.records = JSON.parse('{{ records | tojson | safe }}');
+  window.recordMap = {};
+  window.records.forEach(r => {window.recordMap[r.recordId] = r;});
+</script>
 <script src="static/ship-query.js"></script>
 </body>
 </html>

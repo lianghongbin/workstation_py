@@ -16,6 +16,15 @@ FIELD_MAPS = {
         "changeLabels": "换标标签",
         "fbaLabels": "FBA标签",
     },
+
+    # ✅ 新增收货数据表
+    "dstsnDVylQhjuBiSEo": {
+        "entryDate": "入仓时间",
+        "customerId": "客户代码",
+        "packageNo": "入仓包裹单号",
+        "packageQty": "单个包裹数量",
+        "remark": "备注",
+    },
 }
 
 # 字段类型（用于类型转换；按需补全）
@@ -31,7 +40,15 @@ FIELD_TYPES = {
         "createdAt": "datetime",  # 这里先不做复杂解析，保持原值即可
         "changeLabels": "text",
         "fbaLabels": "text",
-    }
+    },
+
+    "dstsnDVylQhjuBiSEo": {
+        "entryDate": "datetime",   # 入仓时间
+        "customerId": "text",      # 客户代码
+        "packageNo": "text",       # 入仓包裹单号
+        "packageQty": "number",    # 单个包裹数量
+        "remark": "text",          # 备注
+    },
 }
 
 def _coerce_value(ftype: str | None, v):
@@ -67,10 +84,11 @@ def translate_fields(datasheet_id: str, fields: dict, *, direction: str = "zh2en
       - 'zh2en': 中文 -> 英文（**大多数场景用这个**）
       - 'en2zh': 英文 -> 中文
     """
+    type_map = FIELD_TYPES.get(datasheet_id, {})
     fmap = FIELD_MAPS.get(datasheet_id)
+
     if not fmap:
         raise KeyError(f"[translate_fields] 未配置 datasheet 映射: {datasheet_id}")
-
     # 方向选择：默认把中文键翻成英文键
     if direction == "zh2en":
         mapping = {zh: en for en, zh in fmap.items()}   # 反向字典
@@ -78,14 +96,17 @@ def translate_fields(datasheet_id: str, fields: dict, *, direction: str = "zh2en
         mapping = dict(fmap)
     else:
         raise ValueError(f"非法 direction: {direction}")
-
-    type_map = FIELD_TYPES.get(datasheet_id, {})
     out = {}
 
     # 逐个把“源键 -> 目标键”
     for src_key, value in (fields or {}).items():
-        target_key = mapping.get(src_key, src_key)  # 未映射的键名原样保留
-        ftype = type_map.get(target_key)
+        target_key = mapping.get(src_key, src_key)
+        if direction == "en2zh":
+            # target_key=中文，类型表里只有英文 -> 用 src_key
+            ftype = type_map.get(src_key)
+        else:
+            # target_key=英文，直接查
+            ftype = type_map.get(target_key)
         out[target_key] = _coerce_value(ftype, value)
 
     return out

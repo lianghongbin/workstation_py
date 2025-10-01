@@ -16,7 +16,7 @@ class VikaClient:
         }
 
     def add_record(self, fields: dict):
-        fields_mapped = translate_fields(self.datasheet_id, fields)
+        fields_mapped = translate_fields(self.datasheet_id, fields, direction="en2zh")
         payload = {
             "records": [{"fields": fields_mapped}],
             "fieldKey": "name",
@@ -27,9 +27,10 @@ class VikaClient:
     def update_record(self, record_id: str, fields: dict):
         fields_mapped = translate_fields(self.datasheet_id, fields)
         payload = {
-            "records": [{"recordId": record_id, "fields": fields_mapped}],
-            "fieldKey": "name",
+            "records": [{"recordId": record_id, "fields": {"处理完成": True}}],
+            "fieldKey": "name"
         }
+
         resp = requests.patch(self.base_url, headers=self._headers(), json=payload, timeout=10)
         return resp.json()
 
@@ -57,6 +58,7 @@ class VikaClient:
                 "code": data.get("code") or resp.status_code,
                 "message": data.get("message"),
                 "data": data.get("data"),
+                "total": 0
             }
 
         # === 做 schema 映射 ===

@@ -232,7 +232,7 @@
 /* [新增] 退出登录链接样式 */
 .logout-link {
     margin-top: auto;       /* 固定在侧边栏底部 */
-    padding: 15px 20px;
+    padding: 50px 20px;
 }
 .logout-link a {
     text-decoration: none;

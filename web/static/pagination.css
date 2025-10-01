@@ -1,0 +1,37 @@
+
+.pagination {
+    display: flex;
+    justify-content: flex-end;  /* 右对齐 */
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    margin-top: 6px;
+}
+
+.pagination a {
+    text-decoration: none;
+    color: #007bff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid #007bff;
+    transition: all 0.2s ease;
+}
+
+.pagination a:hover {
+    background: #007bff;
+    color: #fff;
+}
+
+.pagination .disabled {
+    color: #aaa;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background: #f0f0f0;
+    cursor: not-allowed;
+}
+
+.pagination .page-info {
+    font-weight: 500;
+    color: #333;
+}
