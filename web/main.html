@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airsupply · Workstation</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+
+<div id="app-container" class="layout content-hidden">
+    <!-- 左侧菜单 -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="static/image/logo.png" alt="logo">
+        </div>
+        <nav>
+            <ul>
+                <li><a href="/receiver" class="menu-item" data-breadcrumb="主页 / 收货处理">收货处理</a></li>
+                <li><a href="query.html" class="menu-item" data-breadcrumb="主页 / 收货查询">收货查询</a></li>
+                <li><a href="/ship" class="menu-item" data-breadcrumb="主页 / 出货申请">出货申请</a></li>
+                <li><a href="/ship_query" class="menu-item" data-breadcrumb="主页 / 全部申请">全部申请</a></li>
+                <li><a href="/ship_processed" class="menu-item" data-breadcrumb="主页 / 处理完成">处理完成</a></li>
+            </ul>
+        </nav>
+
+        <!-- [新增] 退出登录 -->
+        <div class="logout-link">
+            <a href="#" id="logout-link">退出登录</a>
+        </div>
+    </aside>
+
+    <!-- 右侧内容区 -->
+    <div class="main-content">
+        <!-- 上部分：抬头 + 面包屑 -->
+        <header class="top-header">
+            <h1>TBA · Workstation</h1>
+            <div id="breadcrumb" class="breadcrumb">主页 / 收货处理</div>
+            <button id="sync-now-btn" class="sync-now-btn">立即同步</button>
+        </header>
+
+        <!-- 下部分：主显示区 -->
+        <main class="workspace">
+            <iframe id="content-frame" src="/receiver"></iframe>
+        </main>
+    </div>
+</div>
+
+<!-- 登录浮层 -->
+<div id="login-overlay" class="login-overlay" aria-hidden="false" style="display: none">
+    <div class="login-card">
+        <h2 class="login-title">系统登录</h2>
+        <form id="login-form">
+            <div class="login-row">
+                <label for="login-username">账号：</label>
+                <input id="login-username" type="text" autocomplete="username" />
+            </div>
+            <div class="login-row">
+                <label for="login-password">密码：</label>
+                <input id="login-password" type="password" autocomplete="off" />
+            </div>
+            <div class="login-actions">
+                <button id="login-submit" type="submit">登 录</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- /登录浮层 -->
+
+<script src="static/renderer.js"></script>
+</body>
+</html>

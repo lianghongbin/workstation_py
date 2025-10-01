@@ -1,0 +1,244 @@
+/* 整体布局：左侧固定，右侧占满 */
+.layout {
+    display: flex;
+    height: 100vh;
+}
+
+/* 左侧菜单栏 */
+.sidebar {
+    width: 200px;
+    background-color: #f5f5f5;   /* 背景比右侧略深 */
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* Logo 区 */
+.sidebar .logo {
+    width: 100%;
+    padding: 15px 10px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #ccc; /* 下方横线 */
+    text-align: center;
+}
+
+.sidebar .logo img {
+    max-width: 100%;
+    max-height: 40px; /* 限制 logo 高度 */
+    display: inline-block;
+}
+
+/* 菜单区 */
+.sidebar nav {
+    margin-top: 20px; /* 菜单整体往下移 */
+    width: 100%;
+}
+
+.sidebar nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+.sidebar nav ul li {
+    margin: 5px 0;
+}
+
+.sidebar nav ul li a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+    padding: 10px 15px;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+/* hover 效果 */
+.sidebar nav ul li a:hover {
+    background-color: #e0e0e0;
+    color: #000;
+}
+
+/* 选中状态 */
+.sidebar nav ul li a.active {
+    background-color: #d0d0d0;
+    color: #000;
+    font-weight: bold;
+}
+
+/* 右侧内容区 */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 上部抬头和面包屑 */
+.top-header {
+    background-color: #fafafa;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.top-header h1 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.top-header .breadcrumb {
+    margin-top: 5px;
+    font-size: 14px;
+    color: #666;
+}
+
+/* 下部主显示区 */
+.workspace {
+    flex: 1;
+    padding: 20px;
+    overflow: auto;
+}
+
+/* Loading 遮罩层 */
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    color: #333;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.workspace {
+    flex: 1;
+    padding: 0;        /* 去掉内边距，避免 iframe 四周留白 */
+    overflow: hidden;  /* 避免出现双滚动条 */
+}
+
+.workspace iframe {
+    width: 100%;
+    height: 100%;
+    border: none;      /* 移除边框 */
+}
+
+.top-header {
+    background-color: #fafafa;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+    position: relative; /* 为子元素绝对定位做准备 */
+}
+
+.sync-now-btn {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    padding: 6px 12px;
+    font-size: 14px;
+    border: none;
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.sync-now-btn:hover {
+    background-color: #45a049;
+}
+
+/* ===== 登录浮层（新增） ===== */
+.login-overlay {
+    position: fixed;
+    inset: 0;
+    background: #fff;      /* ✅ 改成纯白，不透明 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999; /* 盖在主界面之上 */
+}
+
+.login-overlay[aria-hidden="true"] {
+    display: none;
+}
+
+.login-card {
+    background: #fff;
+    width: 360px;
+    padding: 28px 32px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.login-title {
+    margin: 0 0 20px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #2b2f36;
+    text-align: center;
+}
+
+.login-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 14px;
+    gap: 10px;
+}
+.login-row label {
+    width: 64px;
+    text-align: right;
+    color: #555e6d;
+    font-size: 14px;
+}
+.login-row input {
+    flex: 0 0 200px;   /* 输入框定宽，避免太长 */
+    width: 200px;
+    padding: 8px 10px;
+    border: 1px solid #d7dbe3;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+}
+.login-row input:focus {
+    border-color: #7aa7ff;
+    box-shadow: 0 0 0 3px rgba(74,144,226,0.15);
+}
+
+.login-actions {
+    margin-top: 22px;          /* 与输入区拉开距离 */
+    display: flex;
+    justify-content: center;
+}
+#login-submit {
+    width: 140px;              /* 按钮不拉满 */
+    padding: 10px 0;
+    border: 0;
+    border-radius: 8px;
+    background: #4a90e2;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+}
+#login-submit:hover {
+    background: #357ab7;
+}
+
+/* [新增] 退出登录链接样式 */
+.logout-link {
+    margin-top: auto;       /* 固定在侧边栏底部 */
+    padding: 15px 20px;
+}
+.logout-link a {
+    text-decoration: none;
+    color: #c00;
+    font-size: 14px;
+}
+.logout-link a:hover {
+    text-decoration: underline;
+}

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>收货处理</title>
+    <link rel="stylesheet" href="static/style.css">
+    <style>
+        .form-container {
+            max-width: 700px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px 40px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .form-container h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            width: 150px;
+            font-weight: bold;
+            margin-right: 10px;
+            text-align: right;
+        }
+        .form-group input,
+        .form-group textarea {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            resize: vertical;
+        }
+        .form-actions {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .form-actions button {
+            padding: 10px 20px;
+            background-color: #4285f4;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            min-width: 140px;
+        }
+        .form-actions button:hover {
+            background-color: #3367d6;
+        }
+
+        /* ---------- [MOD] 新增：表单下方消息区样式（成功/错误/淡出） ---------- */
+        .form-message {
+            margin: 16px auto 0;
+            max-width: 700px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.6;
+            display: none;              /* 默认隐藏，由脚本控制显示/隐藏 */
+            transition: opacity .25s;   /* 淡出过渡 */
+        }
+        .form-message.is-success {
+            display: block;
+            background: #ecf8f0;
+            color: #0a7a3d;
+            border: 1px solid #bfe8cf;
+        }
+        .form-message.is-error {
+            display: block;
+            background: #fdecec;
+            color: #b00020;
+            border: 1px solid #f5b5b5;
+        }
+        .form-message.fade-out {
+            opacity: 0;
+        }
+        /* ---------- [MOD] 结束 ---------- */
+    </style>
+</head>
+<body>
+<div class="form-container">
+    <h2>收货处理</h2>
+    <form id="receiveForm">
+        <!-- 入仓时间（隐藏，默认当前日期） -->
+        <input type="hidden" id="entryDate" name="entryDate">
+
+        <div class="form-group">
+            <label for="customerId">客户代码：</label>
+            <input type="text" id="customerId" name="customerId" required>
+        </div>
+
+        <div class="form-group">
+            <label for="packageNo">包裹单号：</label>
+            <input type="text" id="packageNo" name="packageNo" required>
+        </div>
+
+        <div class="form-group">
+            <label for="packageQty">单个数量：</label>
+            <input type="number" id="packageQty" name="packageQty" list="qtyOptions" min="1" required>
+            <datalist id="qtyOptions">
+                <option value="1"></option>
+                <option value="2"></option>
+                <option value="5"></option>
+                <option value="10"></option>
+                <option value="20"></option>
+                <option value="50"></option>
+            </datalist>
+        </div>
+
+        <div class="form-group">
+            <label for="remark">备&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;注：</label>
+            <textarea id="remark" name="remark" rows="3"></textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit">提   交</button>
+        </div>
+    </form>
+
+</div>
+
+<!-- [MOD] 新增：表单下方消息显示区（默认隐藏，脚本控制） -->
+<div id="formMessage" class="form-message" role="status" aria-live="polite"></div>
+<!-- [MOD] 结束 -->
+
+<script>
+    // 页面加载时设置入仓时间为当前日期
+    function setToday() {
+        const entryDateField = document.getElementById('entryDate');
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        entryDateField.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setToday();
+
+        // 回车自动跳到下一个输入框
+        const inputs = document.querySelectorAll('#receiveForm input, #receiveForm textarea');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const next = inputs[index + 1];
+                    if (next) next.focus();
+                    else document.querySelector('#receiveForm button[type="submit"]').focus();
+                }
+            });
+        });
+    });
+
+    document.getElementById("receiveForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(this);
+        const msgBox = document.getElementById("formMessage");
+
+        fetch("/receiver", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            msgBox.className = "form-message"; // 清空旧样式
+            if (data.success) {
+                msgBox.classList.add("is-success");
+                msgBox.textContent = data.message;
+            } else {
+                msgBox.classList.add("is-error");
+                msgBox.textContent = data.message || "提交失败";
+            }
+        })
+        .catch(err => {
+            msgBox.className = "form-message is-error";
+            msgBox.textContent = "请求出错：" + err;
+        });
+    });
+</script>
+</body>
+</html>

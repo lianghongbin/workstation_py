@@ -1,0 +1,24 @@
+/* 公共消息提示样式 */
+.form-message {
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    display: none; /* 默认隐藏 */
+}
+
+/* 成功消息：绿色 */
+.form-message.is-success {
+    display: block;
+    background-color: #e6ffed;
+    border: 1px solid #28a745;
+    color: #155724;
+}
+
+/* 错误消息：红色 */
+.form-message.is-error {
+    display: block;
+    background-color: #ffe6e6;
+    border: 1px solid #dc3545;
+    color: #721c24;
+}

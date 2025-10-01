@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>出货申请查询</title>
+    <link rel="stylesheet" href="static/ship-query.css">
+</head>
+<body>
+<div class="query-container">
+    <label>产品条码：</label><input type="text" id="searchInput" placeholder="输入产品条码查询">
+    <button id="searchBtn">搜索</button>
+</div>
+
+<table id="shipmentTable">
+    <thead>
+    <tr>
+        <th>产品条码</th>
+        <th>箱数</th>
+        <th>QTY</th>
+        <th>提交时间</th>
+        <th>换标</th>
+        <th>FBA</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for r in records %}
+<tr>
+  <td>{{ r.barcode }}</td>
+  <td>{{ r.cartons }}</td>
+  <td>{{ r.qty }}</td>
+  <td>{{ r.createdAt }}</td>
+  <td>
+    {% for lbl in r.changeLabels %}
+      <a href="{{ lbl.url }}" target="_blank">{{ lbl.name }}</a><br>
+    {% endfor %}
+  </td>
+  <td>
+    {% for lbl in r.fbaLabels %}
+      <a href="{{ lbl.url }}" target="_blank">{{ lbl.name }}</a><br>
+    {% endfor %}
+  </td>
+</tr>
+{% else %}
+<tr><td colspan="7">没有已处理的出货申请</td></tr>
+{% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination">
+  {% set qargs = query_args or {} %}
+
+  {# 上一页 #}
+  {% if page > 1 %}
+    <a href="{{ url_for('ship_processed.ship_processed_page', page=page-1, **qargs) }}">上一页</a>
+  {% else %}
+    <span class="disabled">上一页</span>
+  {% endif %}
+
+  {# 当前页/总页数 #}
+  <span>第 {{ page }} / {{ total_pages }} 页 (共 {{ total }} 条)</span>
+
+  {# 下一页 #}
+  {% if page < total_pages %}
+    <a href="{{ url_for('ship_processed.ship_processed_page', page=page+1, **qargs) }}">下一页</a>
+  {% else %}
+    <span class="disabled">下一页</span>
+  {% endif %}
+</div>
+<!-- ✅ 覆盖层 -->
+<div id="overlay">
+    <div id="overlay-content">
+        <span class="close-btn" onclick="closeOverlay()">✖</span>
+        <div id="labelPreview" class="label-template">
+            <!-- 这里由 JS 动态填充面单内容 -->
+        </div>
+        <button class="print-btn" onclick="printLabel()">打印面单</button>
+    </div>
+</div>
+
+</body>
+</html>
