@@ -8,8 +8,11 @@
 </head>
 <body>
 <div class="query-container">
-    <label>产品条码：</label><input type="text" id="searchInput" placeholder="输入产品条码查询">
-    <button id="searchBtn">搜索</button>
+    <form method="get" action="/ship_processed" class="query-container">
+    <label>产品条码：</label>
+    <input type="text" name="search" placeholder="输入产品条码查询">
+    <button type="submit">搜索</button>
+</form>
 </div>
 
 <table id="shipmentTable">

@@ -19,8 +19,8 @@ def ship_query_page():
     """
     page = int(request.args.get("page", 1))
     search = request.args.get("search", "").strip()
-    page_size = 15
-
+    page_size = 3
+    print('search', search)
     params = {
         "pageNum": page,
         "pageSize": page_size,

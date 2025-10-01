@@ -8,8 +8,11 @@
 </head>
 <body>
 <div class="query-container">
-    <label>产品条码：</label><input type="text" id="searchInput" placeholder="输入产品条码查询">
-    <button id="searchBtn">搜索</button>
+    <form method="get" action="/ship_query" class="query-container">
+    <label>产品条码：</label>
+    <input type="text" name="search" placeholder="输入产品条码查询">
+    <button type="submit">搜索</button>
+</form>
 </div>
 
 <table id="shipmentTable">
@@ -60,7 +63,7 @@
 
     {# 上一页 #}
     {% if page > 1 %}
-    <a href="{{ url_for('ship_query.ship_page', page=page-1, **qargs) }}">上一页</a>
+    <a href="{{ url_for('ship_query.ship_query_page', page=page-1, **qargs) }}">上一页</a>
     {% else %}
     <span class="disabled">上一页</span>
     {% endif %}
@@ -70,7 +73,7 @@
 
     {# 下一页 #}
     {% if page < total_pages %}
-    <a href="{{ url_for('ship_query.ship_page', page=page+1, **qargs) }}">下一页</a>
+    <a href="{{ url_for('ship_query.ship_query_page', page=page+1, **qargs) }}">下一页</a>
     {% else %}
     <span class="disabled">下一页</span>
     {% endif %}
