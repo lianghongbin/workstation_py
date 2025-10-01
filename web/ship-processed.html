@@ -32,7 +32,7 @@
   <td>{{ r.barcode }}</td>
   <td>{{ r.cartons }}</td>
   <td>{{ r.qty }}</td>
-  <td>{{ r.createdAt }}</td>
+        <td><span class="time" data-time="{{ r.createdAt }}"></span></td>
   <td>
     {% for lbl in r.changeLabels %}
       <a href="{{ lbl.url }}" target="_blank">{{ lbl.name }}</a><br>
@@ -80,6 +80,20 @@
         <button class="print-btn" onclick="printLabel()">打印面单</button>
     </div>
 </div>
+<script>
+function formatTimestamp(ms) {
+  const d = new Date(Number(ms));
+  const pad = n => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} `
+       + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
 
+document.querySelectorAll(".time").forEach(el => {
+  const ts = el.dataset.time;
+  if (ts) {
+    el.textContent = formatTimestamp(ts);
+  }
+});
+</script>
 </body>
 </html>

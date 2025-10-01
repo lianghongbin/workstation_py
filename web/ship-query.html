@@ -9,10 +9,10 @@
 <body>
 <div class="query-container">
     <form method="get" action="/ship_query" class="query-container">
-    <label>产品条码：</label>
-    <input type="text" name="search" placeholder="输入产品条码查询">
-    <button type="submit">搜索</button>
-</form>
+        <label>产品条码：</label>
+        <input type="text" name="search" placeholder="输入产品条码查询">
+        <button type="submit">搜索</button>
+    </form>
 </div>
 
 <table id="shipmentTable">
@@ -33,7 +33,7 @@
         <td>{{ r.barcode }}</td>
         <td>{{ r.cartons }}</td>
         <td>{{ r.qty }}</td>
-        <td>{{ r.createdAt }}</td>
+        <td><span class="time" data-time="{{ r.createdAt }}"></span></td>
         <td>
             {% for lbl in r.changeLabels %}
             <a href="{{ lbl.url }}" target="_blank">{{ lbl.name }}</a><br>
@@ -90,10 +90,27 @@
     </div>
 </div>
 <script>
-  window.records = JSON.parse('{{ records | tojson | safe }}');
-  window.recordMap = {};
-  window.records.forEach(r => {window.recordMap[r.recordId] = r;});
+    window.records = JSON.parse('{{ records | tojson | safe }}');
+    window.recordMap = {};
+    window.records.forEach(r => {
+        window.recordMap[r.recordId] = r;
+    });
 </script>
 <script src="static/ship-query.js"></script>
+<script>
+function formatTimestamp(ms) {
+  const d = new Date(Number(ms));
+  const pad = n => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} `
+       + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+document.querySelectorAll(".time").forEach(el => {
+  const ts = el.dataset.time;
+  if (ts) {
+    el.textContent = formatTimestamp(ts);
+  }
+});
+</script>
 </body>
 </html>
