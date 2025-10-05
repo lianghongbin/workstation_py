@@ -1,4 +1,6 @@
 # vika_client.py
+import os
+
 import requests
 from vika_schema import translate_fields
 
@@ -96,17 +98,57 @@ class VikaClient:
         # data 是一个 list，取第一个文件
         return result["data"]
 
+    #批量上传附件
+    def update_attachments(self, file_paths: list[str]) -> list[dict]:
+        """
+        批量上传多个附件（仅上传，不绑定记录）。
+        :param file_paths: 本地文件路径列表
+        :return: 每个上传成功文件的 data 对象列表（不做 dict/list 类型判断，直接收集 upload_attachment 的返回值）
+        """
+        if not file_paths:
+            raise ValueError("file_paths 不能为空")
+
+        uploaded_files: list[dict] = []
+
+        for file_path in file_paths:
+            if not os.path.isfile(file_path):
+                print(f"[WARN] 跳过无效文件路径: {file_path}")
+                continue
+
+            # 复用单文件上传（它返回 result['data']）
+            file_info = self.upload_attachment(file_path)
+            uploaded_files.append(file_info)
+
+        return uploaded_files
+
 
     #上传附件，并直接绑定到收货记录上
-    def update_record_with_attachment(self, record_id: str, field_name: str, file_path: str) -> dict:
+    def update_record_with_attachment(
+            self,
+            match_field_name: str,
+            match_field_value: str,
+            attachment_field_name: str,
+            file_paths: list[str],
+    ) -> dict:
         """
-        上传附件并追加到指定记录的字段（保留已有附件，如果没有就新建数组）
-        """
-        # 1. 上传新附件
-        file_info = self.upload_attachment(file_path)
+        根据任意字段匹配记录，并上传多个附件追加到指定字段。
+        示例：
+          update_record_with_attachment("产品条码", "A123456", "附件", [...])
 
-        # 2. 查询现有记录
-        query_url = f"{self.base_url}?recordIds={record_id}&fieldKey=name"
+        参数:
+            match_field_name: 匹配字段名（例如 '产品条码'）
+            match_field_value: 匹配字段的值（例如 'A123456'）
+            update_field_name: 要更新的字段名（例如 '附件'）
+            file_paths: 文件路径列表
+        """
+        if not file_paths:
+            raise ValueError("file_paths 不能为空")
+
+        # 1️⃣ 上传多个附件
+        uploaded_files = self.update_attachments(file_paths)
+
+        # 2️⃣ 查询匹配记录
+        query_url = f'{self.base_url}?filterByFormula={match_field_name}="{match_field_value}"&fieldKey=name'
         resp = requests.get(query_url, headers=self._headers(), timeout=10)
         data = resp.json()
         if not resp.ok or not data.get("success"):
@@ -114,22 +156,22 @@ class VikaClient:
 
         records = data["data"].get("records", [])
         if not records:
-            raise ValueError(f"未找到记录: {record_id}")
+            raise ValueError(f"未找到匹配记录: {match_field_name}={match_field_value}")
 
+        target_record_id = records[0]["recordId"]
         old_fields = records[0].get("fields", {})
-        # ⚡ 如果原来没有这个字段，默认空数组就行
-        old_attachments = old_fields.get(field_name, []) or []
+        old_attachments = old_fields.get(attachment_field_name, []) or []
 
-        # 3. 合并旧附件 + 新附件
-        new_attachments = old_attachments + [file_info]
+        # 3️⃣ 合并旧附件 + 新附件
+        new_attachments = old_attachments + uploaded_files
 
-        # 4. 更新记录
+        # 4️⃣ 更新记录
         payload = {
             "records": [
                 {
-                    "recordId": record_id,
+                    "recordId": target_record_id,
                     "fields": {
-                        field_name: new_attachments
+                        attachment_field_name: new_attachments
                     }
                 }
             ]
@@ -140,4 +182,12 @@ class VikaClient:
         if not resp.ok or not result.get("success"):
             raise RuntimeError(f"更新记录失败: {resp.status_code}, {result}")
 
-        return {"success": True, "message": "文件追加成功", "data": result.get("data")}
+        return {
+            "success": True,
+            "message": f"文件追加成功（新增 {len(uploaded_files)} 个）",
+            "record_id": target_record_id,
+            "matched_field": match_field_name,
+            "matched_value": match_field_value,
+            "uploaded": [f.get('name') for f in uploaded_files],
+            "data": result.get("data"),
+        }
