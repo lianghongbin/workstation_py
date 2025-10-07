@@ -1,8 +1,8 @@
 from flask import Flask
 from backend import main, receiver, ship, ship_query, ship_processed
-from backend.monitor import start_abnormal_attachment_monitor
+from backend.monitor import start_all_monitors, AbnormalAttachmentMonitor
 
-WATCH_ROOT = "D:/pictures"  # 或 /data/photos
+WATCH_ROOT = "./photos"  # 或 /data/photos
 
 
 def create_app():
@@ -22,7 +22,7 @@ def create_app():
 if __name__ == '__main__':
     app = create_app()
 
-    start_abnormal_attachment_monitor(WATCH_ROOT, interval_minutes=10)
+    start_all_monitors(WATCH_ROOT, 10)
 
     # 启动 Web 服务，默认首页走 main 蓝图 -> main.html
     app.run(host="0.0.0.0", port=80, debug=True)
