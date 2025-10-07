@@ -30,14 +30,15 @@ class VikaClient:
         return resp.json()
 
     def update_record(self, record_id: str, fields: dict):
-        fields_mapped = translate_fields(self.datasheet_id, fields)
         payload = {
-            "records": [{"recordId": record_id, "fields": {"处理完成": True}}],
-            "fieldKey": "name"
+            "records": [
+                {"recordId": record_id, "fields": fields}
+            ],
+            "fieldKey": "name"  # 让 Vika 用字段“名称”而不是字段ID匹配
         }
-
         resp = requests.patch(self.base_url, headers=self._headers(), json=payload, timeout=10)
-        return resp.json()
+        result = resp.json()
+        return result
 
     # === 新增：查询 ===
     def query_records(self, params: dict | None = None):

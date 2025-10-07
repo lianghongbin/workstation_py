@@ -25,6 +25,11 @@ FIELD_MAPS = {
         "packageQty": "单个包裹数量",
         "remark": "备注",
     },
+
+# ✅ 原数据表
+    "dstyZybgPZi0tL8aNY": {
+        "receiver_last_upload_id": "receiver_last_upload_id",
+    },
 }
 
 # 字段类型（用于类型转换；按需补全）
@@ -48,6 +53,10 @@ FIELD_TYPES = {
         "packageNo": "text",       # 入仓包裹单号
         "packageQty": "number",    # 单个包裹数量
         "remark": "text",          # 备注
+    },
+
+    "dstyZybgPZi0tL8aNY": {
+        "receiver_last_upload_id": "number",   # ID
     },
 }
 
