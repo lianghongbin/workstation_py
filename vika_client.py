@@ -99,7 +99,7 @@ class VikaClient:
         return result["data"]
 
     #批量上传附件
-    def update_attachments(self, file_paths: list[str]) -> list[dict]:
+    def upload_attachments(self, file_paths: list[str]) -> list[dict]:
         """
         批量上传多个附件（仅上传，不绑定记录）。
         :param file_paths: 本地文件路径列表
@@ -145,7 +145,7 @@ class VikaClient:
             raise ValueError("file_paths 不能为空")
 
         # 1️⃣ 上传多个附件
-        uploaded_files = self.update_attachments(file_paths)
+        uploaded_files = self.upload_attachments(file_paths)
 
         # 2️⃣ 查询匹配记录
         query_url = f'{self.base_url}?filterByFormula={match_field_name}="{match_field_value}"&fieldKey=name'
@@ -177,7 +177,7 @@ class VikaClient:
             ]
         }
 
-        resp = requests.patch(self.base_url, headers=self._headers(False), json=payload, timeout=30)
+        resp = requests.patch(self.base_url, headers=self._headers(), json=payload, timeout=30)
         result = resp.json()
         if not resp.ok or not result.get("success"):
             raise RuntimeError(f"更新记录失败: {resp.status_code}, {result}")
@@ -191,3 +191,14 @@ class VikaClient:
             "uploaded": [f.get('name') for f in uploaded_files],
             "data": result.get("data"),
         }
+
+
+    def query_abnormal_records(self):
+        """
+        查询 receiver 表中异常字段为 True 的记录。
+        """
+        filter_formula = "{异常} = TRUE()"
+        return self.query_records(params={
+            "fieldKey": "name",
+            "filterByFormula": filter_formula
+        })

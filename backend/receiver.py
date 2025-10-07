@@ -17,17 +17,28 @@ def add_receiver():
     提交收货表单 -> 写入 Vika 在线表格
     """
     try:
-        print(1)
         data = request.get_json(force=True)
+        fields = data.get("fields", {})
+        package_no = fields.get("packageNo")
+        print(package_no)
+        # ✅ 非空检查
+        if not package_no:
+            return jsonify({"success": False, "message": "入仓包裹单号不能为空"})
 
-        result = vika.add_record(data.get("fields", {}))
+        # ✅ 重复检查
+        filter_formula = f"{{入仓包裹单号}} = '{package_no}'"
+        check = vika.query_records(params={"fieldKey": "name", "filterByFormula": filter_formula})
+        if check.get("success") and check.get("data"):
+            return jsonify({"success": False, "message": f"入仓包裹单号重复：{package_no}"})
+
+        # ⬇️ 下面全是你原来的逻辑，不动
+        result = vika.add_record(fields)
+        print(result)
         if not result.get("success"):
             return jsonify({"success": False, "message": "收货提交错误"})
         return jsonify({"success": True, "message": "收货提交成功！"})
     except Exception as e:
-        print(e)
-        return jsonify({"success": False, "message": "收货提交出错！"})
-
+        return jsonify({"success": False, "message": str(e)})
 
 @bp.route("/receiver/list", methods=["GET"])
 def list_receiver():

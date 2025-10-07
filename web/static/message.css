@@ -1,24 +1,27 @@
-/* 公共消息提示样式 */
-.form-message {
-    margin-top: 12px;
-    padding: 10px;
-    border-radius: 4px;
-    font-size: 14px;
-    display: none; /* 默认隐藏 */
-}
-
-/* 成功消息：绿色 */
-.form-message.is-success {
-    display: block;
-    background-color: #e6ffed;
-    border: 1px solid #28a745;
-    color: #155724;
-}
-
-/* 错误消息：红色 */
-.form-message.is-error {
-    display: block;
-    background-color: #ffe6e6;
-    border: 1px solid #dc3545;
-    color: #721c24;
-}
+/* ---------- [MOD] 新增：表单下方消息区样式（成功/错误/淡出） ---------- */
+        .form-message {
+            margin: 16px auto 0;
+            max-width: 700px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.6;
+            display: none;              /* 默认隐藏，由脚本控制显示/隐藏 */
+            transition: opacity .25s;   /* 淡出过渡 */
+        }
+        .form-message.is-success {
+            display: block;
+            background: #ecf8f0;
+            color: #0a7a3d;
+            border: 1px solid #bfe8cf;
+        }
+        .form-message.is-error {
+            display: block;
+            background: #fdecec;
+            color: #b00020;
+            border: 1px solid #f5b5b5;
+        }
+        .form-message.fade-out {
+            opacity: 0;
+        }
+        /* ---------- [MOD] 结束 ---------- */

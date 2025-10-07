@@ -4,9 +4,6 @@ from flask import Blueprint, render_template, request, jsonify
 from backend.print_service import PrintService
 from vika_client import VikaClient
 
-import requests
-import math
-
 # === 保持 Blueprint 名称与现有一致 ===
 bp = Blueprint("ship_query", __name__)
 printer = PrintService()
@@ -34,6 +31,9 @@ def ship_query_page():
     result = vika.query_records(params)
     args = request.args.to_dict()
 
+    print(1)
+    print(result)
+
     if not result.get("success"):
         # ✅ 在 Vika 返回的基础上封装成你要的结构
         payload = {
@@ -51,6 +51,7 @@ def ship_query_page():
 
     records = result["data"]
     total = result['total']
+    print(result)
 
     # 计算总页数（至少为 1）
     total_pages = max(1, (total + page_size - 1) // page_size)

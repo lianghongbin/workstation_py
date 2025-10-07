@@ -7,7 +7,7 @@
 /* 左侧菜单栏 */
 .sidebar {
     width: 200px;
-    background-color: #f5f5f5;   /* 背景比右侧略深 */
+    background-color: #f5f5f5; /* 背景比右侧略深 */
     border-right: 1px solid #ddd;
     display: flex;
     flex-direction: column;
@@ -118,14 +118,14 @@
 
 .workspace {
     flex: 1;
-    padding: 0;        /* 去掉内边距，避免 iframe 四周留白 */
-    overflow: hidden;  /* 避免出现双滚动条 */
+    padding: 0; /* 去掉内边距，避免 iframe 四周留白 */
+    overflow: hidden; /* 避免出现双滚动条 */
 }
 
 .workspace iframe {
     width: 100%;
     height: 100%;
-    border: none;      /* 移除边框 */
+    border: none; /* 移除边框 */
 }
 
 .top-header {
@@ -157,7 +157,7 @@
 .login-overlay {
     position: fixed;
     inset: 0;
-    background: #fff;      /* ✅ 改成纯白，不透明 */
+    background: #fff; /* ✅ 改成纯白，不透明 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -173,7 +173,7 @@
     width: 360px;
     padding: 28px 32px;
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
 .login-title {
@@ -190,14 +190,16 @@
     margin-bottom: 14px;
     gap: 10px;
 }
+
 .login-row label {
     width: 64px;
     text-align: right;
     color: #555e6d;
     font-size: 14px;
 }
+
 .login-row input {
-    flex: 0 0 200px;   /* 输入框定宽，避免太长 */
+    flex: 0 0 200px; /* 输入框定宽，避免太长 */
     width: 200px;
     padding: 8px 10px;
     border: 1px solid #d7dbe3;
@@ -205,18 +207,20 @@
     font-size: 14px;
     outline: none;
 }
+
 .login-row input:focus {
     border-color: #7aa7ff;
-    box-shadow: 0 0 0 3px rgba(74,144,226,0.15);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
 }
 
 .login-actions {
-    margin-top: 22px;          /* 与输入区拉开距离 */
+    margin-top: 22px; /* 与输入区拉开距离 */
     display: flex;
     justify-content: center;
 }
+
 #login-submit {
-    width: 140px;              /* 按钮不拉满 */
+    width: 140px; /* 按钮不拉满 */
     padding: 10px 0;
     border: 0;
     border-radius: 8px;
@@ -225,20 +229,85 @@
     font-size: 15px;
     cursor: pointer;
 }
+
 #login-submit:hover {
     background: #357ab7;
 }
 
 /* [新增] 退出登录链接样式 */
 .logout-link {
-    margin-top: auto;       /* 固定在侧边栏底部 */
+    margin-top: auto; /* 固定在侧边栏底部 */
     padding: 50px 20px;
 }
+
 .logout-link a {
     text-decoration: none;
     color: #c00;
     font-size: 14px;
 }
+
 .logout-link a:hover {
     text-decoration: underline;
+}
+
+
+.form-container {
+    max-width: 700px;
+    margin: 20px auto;
+    background: #fff;
+    padding: 20px 40px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.form-container h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.form-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    width: 150px;
+    font-weight: bold;
+    margin-right: 10px;
+    text-align: right;
+}
+
+.form-group input,
+.form-group textarea {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.form-actions button {
+    padding: 10px 20px;
+    background-color: #4285f4;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    min-width: 140px;
+}
+
+.form-actions button:hover {
+    background-color: #3367d6;
 }

@@ -24,6 +24,7 @@ FIELD_MAPS = {
         "packageNo": "入仓包裹单号",
         "packageQty": "单个包裹数量",
         "remark": "备注",
+        "abnormal": "异常",
     },
 }
 
@@ -48,6 +49,7 @@ FIELD_TYPES = {
         "packageNo": "text",       # 入仓包裹单号
         "packageQty": "number",    # 单个包裹数量
         "remark": "text",          # 备注
+        "abnormal": "boolean"
     },
 }
 

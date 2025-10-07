@@ -1,5 +1,9 @@
 from flask import Flask
 from backend import main, receiver, ship, ship_query, ship_processed
+from backend.monitor import start_abnormal_attachment_monitor
+
+WATCH_ROOT = "D:/pictures"  # 或 /data/photos
+
 
 def create_app():
     # 配置 web 目录作为模板目录和静态资源目录
@@ -17,5 +21,8 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
+
+    start_abnormal_attachment_monitor(WATCH_ROOT, interval_minutes=10)
+
     # 启动 Web 服务，默认首页走 main 蓝图 -> main.html
     app.run(host="0.0.0.0", port=80, debug=True)

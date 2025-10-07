@@ -21,7 +21,7 @@ def add_ship():
 
         result = vika.add_record(data.get("fields", {}))
         if not result.get("success"):
-            return jsonify({"success": False, "message": "出货申请提交错误"})
+            return jsonify({"success": False, "message": "出货申请提交错误，请重试！"})
         return jsonify({"success": True, "message": "出货申请成功！"})
     except Exception as e:
-        return jsonify({"success": False, "message": "出货申请出错！"})
+        return jsonify({"success": False, "message": "出货申请出错，请检查重试！"})
