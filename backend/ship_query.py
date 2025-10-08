@@ -17,7 +17,7 @@ def ship_query_page():
     page = int(request.args.get("page", 1))
     search = request.args.get("search", "").strip()
     page_size = 15
-    print('search', search)
+
     params = {
         "pageNum": page,
         "pageSize": page_size,
@@ -30,9 +30,6 @@ def ship_query_page():
 
     result = vika.query_records(params)
     args = request.args.to_dict()
-
-    print(1)
-    print(result)
 
     if not result.get("success"):
         # ✅ 在 Vika 返回的基础上封装成你要的结构

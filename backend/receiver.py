@@ -33,7 +33,7 @@ def add_receiver():
 
         # ⬇️ 下面全是你原来的逻辑，不动
         result = vika.add_record(fields)
-        print(result)
+
         if not result.get("success"):
             return jsonify({"success": False, "message": "收货提交错误"})
         return jsonify({"success": True, "message": "收货提交成功！"})

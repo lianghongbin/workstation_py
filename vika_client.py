@@ -34,11 +34,19 @@ class VikaClient:
         return resp.json()
 
     def update_record(self, record_id: str, fields: dict):
-        fields_mapped = translate_fields(self.datasheet_id, fields)
+        # ✅ 如果字段名已经是中文，就不要再映射
+        # 判断方式：第一个 key 含中文字符
+        first_key = list(fields.keys())[0] if fields else ""
+        if any('\u4e00' <= ch <= '\u9fff' for ch in first_key):
+            fields_mapped = fields  # 已是中文，不映射
+        else:
+            fields_mapped = translate_fields(self.datasheet_id, fields)
+
         payload = {
-            "records": [{"recordId": record_id, "fields": {"处理完成": True}}],
+            "records": [{"recordId": record_id, "fields": fields_mapped}],
             "fieldKey": "name"
         }
+
         limit()  # [RATE LIMIT ADDED]
         resp = requests.patch(self.base_url, headers=self._headers(), json=payload, timeout=10)
         return resp.json()
@@ -123,7 +131,7 @@ class VikaClient:
 
             file_info = self.upload_attachment(file_path)  # 内部已限速
             uploaded_files.append(file_info)
-
+            time.sleep(1.2)  # ⚠️ 加这一句，每张图之间等待 1.2s，彻底防止 429
         return uploaded_files
 
     # 上传附件，并直接绑定到收货记录上
