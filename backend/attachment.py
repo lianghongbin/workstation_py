@@ -1,7 +1,8 @@
 import os
 import json
+import re
 import time
-import logging
+from workstation_logger import workstation_logger
 import threading  # 🟩 新增：全局互斥锁，防止并发任务冲突
 from datetime import datetime, timedelta
 from vika_client import VikaClient
@@ -9,18 +10,7 @@ from vika_client import VikaClient
 # ==========================================================
 # ========== 日志配置 ==========
 # ==========================================================
-logger = logging.getLogger("attachment")
-logger.setLevel(logging.INFO)
-
-if not logger.handlers:
-    os.makedirs("logs", exist_ok=True)
-    fh = logging.FileHandler("logs/attachment.log", encoding="utf-8")
-    ch = logging.StreamHandler()
-    fmt = logging.Formatter("%(asctime)s [%(levelname)s] [attachment] %(message)s")
-    fh.setFormatter(fmt)
-    ch.setFormatter(fmt)
-    logger.addHandler(fh)
-    logger.addHandler(ch)
+logger = workstation_logger("attachment")
 
 # ==========================================================
 # ========== 缓存配置（已改为 cache 目录） ==========
@@ -64,20 +54,58 @@ def _save_cache(cache: dict):
         logger.error(f"❌ 缓存写入失败: {e}")
 
 
+def normalize_barcode(raw: str) -> str:
+    """
+    将形如 (420)91761(92)00190261248448272629 的字符串
+    转换为最后一段括号号段 + 紧随数字，例如 → 9200190261248448272629。
+    如果不符合该格式，则原样返回。
+    """
+    if not isinstance(raw, str):
+        return ""
+    matches = list(re.finditer(r"\((\d+)\)(\d+)", raw))
+    if not matches:
+        return raw.strip()
+    last = matches[-1]
+    return f"{last.group(1)}{last.group(2)}"
+
+
 def find_photo_by_barcode(watch_root: str, barcode: str) -> list[str]:
-    """查找指定包裹号目录下的 jpg/jpeg 图片"""
-    folder = os.path.join(watch_root, barcode)
-    if not os.path.isdir(folder):
-        logger.warning(f"📭 未找到目录: {folder}")
+    """
+    根据条码查找目录中的 jpg/jpeg 图片：
+    1. 优先查找 {watch_root}/{barcode}
+    2. 若不存在，则遍历 watch_root 下的所有子目录，
+       对每个目录名进行 normalize_barcode()，匹配成功即返回该目录下的图片。
+    """
+    if not watch_root or not barcode:
         return []
 
-    photos = [
-        os.path.join(folder, f)
-        for f in os.listdir(folder)
-        if f.lower().endswith((".jpg", ".jpeg"))
-    ]
-    logger.info(f"📸 {barcode} 共找到 {len(photos)} 张图片")
-    return photos
+    # 1️⃣ 直接查找
+    folder = os.path.join(watch_root, barcode)
+    if os.path.isdir(folder):
+        return [
+            os.path.join(folder, f)
+            for f in os.listdir(folder)
+            if f.lower().endswith((".jpg", ".jpeg"))
+        ]
+
+    # 2️⃣ 反向匹配
+    try:
+        for name in os.listdir(watch_root):
+            path = os.path.join(watch_root, name)
+            if not os.path.isdir(path):
+                continue
+
+            normalized = normalize_barcode(name)
+            if normalized == barcode:
+                return [
+                    os.path.join(path, f)
+                    for f in os.listdir(path)
+                    if f.lower().endswith((".jpg", ".jpeg"))
+                ]
+    except Exception:
+        pass
+
+    return []
 
 
 # ==========================================================
@@ -87,13 +115,11 @@ def run_abnormal_upload_sync(vika_receiver: VikaClient, watch_root: str):
     """
     主任务逻辑：
       1. 查询 “异常=TRUE 且 异常图片为空” 的记录
-      2. 查找对应包裹目录
+      2. 查找对应包裹目录（支持反查）
       3. 上传图片
       4. 删除目录及图片
       5. 写入缓存（48 小时）
     """
-
-    # 🟩 新增：加互斥锁，防止多线程重复执行
     if not _sync_lock.acquire(blocking=False):
         logger.warning("⚠️ 检测到已有上传任务在执行，跳过本轮")
         return
@@ -105,7 +131,6 @@ def run_abnormal_upload_sync(vika_receiver: VikaClient, watch_root: str):
         now = datetime.now()
         expire_time = now + timedelta(hours=CACHE_TTL_HOURS)
 
-        # 🟦 修改：Vika 不支持 ISBLANK() 多字段组合，使用 NOT() 规避
         filter_formula = "AND({异常}=TRUE(), NOT({异常图片}))"
 
         try:
@@ -131,34 +156,34 @@ def run_abnormal_upload_sync(vika_receiver: VikaClient, watch_root: str):
                 logger.warning(f"⚠️ 记录缺少 recordId 或 barcode，跳过")
                 continue
 
-            folder = os.path.join(watch_root, barcode)
-            if not os.path.isdir(folder):
-                logger.warning(f"📭 未找到目录: {folder}")
-                continue
-
+            # ✅ 改动 1：统一交给 find_photo_by_barcode 查找（包含反查逻辑）
             photos = find_photo_by_barcode(watch_root, barcode)
             if not photos:
-                logger.info(f"📭 {barcode} 没有图片，跳过")
+                logger.info(f"📭 未找到与条码 {barcode} 匹配的目录或无图片，跳过")
                 continue
+
+            # ✅ 改动 2：从第一张图片路径反推真实目录名
+            photo_dir = os.path.dirname(photos[0])
 
             try:
                 logger.info(f"⬆️ 上传 {len(photos)} 张图片 -> record={record_id}")
-                upload_result = vika_receiver.update_record_with_attachment("recordId", record_id, "异常图片", photos)
+                upload_result = vika_receiver.update_record_with_attachment(
+                    "recordId", record_id, "异常图片", photos
+                )
                 logger.info(f"✅ 上传完成 record={record_id}, 上传数={len(upload_result.get('data', []))}")
 
-                # 🟩 新增：详细删除日志和异常安全
+                # 删除已上传文件
                 for f in photos:
                     if os.path.exists(f):
                         os.remove(f)
                         logger.info(f"🗑️ 删除文件: {f}")
-                    else:
-                        logger.warning(f"⚠️ 文件已不存在: {f}")
 
+                # ✅ 改动 3：删除真实目录
                 try:
-                    os.rmdir(folder)
-                    logger.info(f"📁 删除目录成功: {folder}")
+                    os.rmdir(photo_dir)
+                    logger.info(f"📁 删除目录成功: {photo_dir}")
                 except OSError as e:
-                    logger.warning(f"⚠️ 删除目录失败: {folder} ({e})")
+                    logger.warning(f"⚠️ 删除目录失败: {photo_dir} ({e})")
 
                 # 写入缓存
                 cache[record_id] = {
@@ -178,7 +203,6 @@ def run_abnormal_upload_sync(vika_receiver: VikaClient, watch_root: str):
         logger.info("✅ [主任务] 异常图片上传任务完成\n")
 
     finally:
-        # 🟩 新增：确保锁释放，即使异常也能继续下次任务
         _sync_lock.release()
 
 
@@ -199,8 +223,8 @@ def run_missing_photo_sync(vika_receiver: VikaClient, watch_root: str):
     now = datetime.now()
     updated = False
 
-    for barcode in os.listdir(watch_root):
-        folder = os.path.join(watch_root, barcode)
+    for dirname in os.listdir(watch_root):
+        folder = os.path.join(watch_root, dirname)
         if not os.path.isdir(folder):
             continue
 
@@ -209,17 +233,14 @@ def run_missing_photo_sync(vika_receiver: VikaClient, watch_root: str):
         if (now - mtime).total_seconds() > 86400:
             continue
 
-        photos = find_photo_by_barcode(watch_root, barcode)
-        logger.info(f'24小时变动的文件夹 {barcode}')
-
-        logger.info(f'新增的文件 {photos}')
+        photos = find_photo_by_barcode(watch_root, dirname)
         if not photos:
             continue
 
-        # 从缓存中查找记录
-        record_info = next((v for v in cache.values() if v["barcode"] == barcode), None)
+        # ✅ 改动：标准化目录名再匹配缓存
+        folder_barcode = normalize_barcode(dirname)
+        record_info = next((v for v in cache.values() if v.get("barcode") == folder_barcode), None)
         if not record_info:
-            logger.debug(f"🪣 {barcode} 不在缓存中，跳过")
             continue
 
         record_id = record_info["record_id"]
@@ -229,10 +250,12 @@ def run_missing_photo_sync(vika_receiver: VikaClient, watch_root: str):
         if not new_files:
             continue
 
-        logger.info(f"📸 {barcode} 发现 {len(new_files)} 张新增图片，准备补传")
+        logger.info(f"📸 {folder_barcode} 发现 {len(new_files)} 张新增图片，准备补传")
 
         try:
-            result = vika_receiver.update_record_with_attachment("recordId", record_id, "异常图片", new_files)
+            result = vika_receiver.update_record_with_attachment(
+                "recordId", record_id, "异常图片", new_files
+            )
             logger.info(f"✅ 增量上传成功 record={record_id}, 新增={len(new_files)}")
 
             uploaded |= set(os.path.basename(p) for p in new_files)
@@ -241,10 +264,34 @@ def run_missing_photo_sync(vika_receiver: VikaClient, watch_root: str):
             record_info["expire"] = (now + timedelta(hours=CACHE_TTL_HOURS)).isoformat()
             updated = True
 
-        except Exception as e:
-            logger.exception(f"❌ 增量上传失败 barcode={barcode}: {e}")
+            # ====== ✅ 新增：删除已补传文件；若无剩余 jpg/jpeg，尝试删除目录 ======
+            for f in new_files:
+                try:
+                    if os.path.exists(f):
+                        os.remove(f)
+                        logger.info(f"🗑️ 删除文件: {f}")
+                    else:
+                        logger.warning(f"⚠️ 文件已不存在: {f}")
+                except Exception as e:
+                    logger.warning(f"⚠️ 删除文件失败: {f} ({e})")
 
-        time.sleep(1.5)  # 限流保护
+            try:
+                # 目录下是否还有 jpg/jpeg（与主任务口径一致）
+                remaining = [
+                    name for name in os.listdir(folder)
+                    if name.lower().endswith((".jpg", ".jpeg"))
+                ]
+                if not remaining:
+                    os.rmdir(folder)
+                    logger.info(f"📁 删除目录成功: {folder}")
+            except OSError as e:
+                logger.warning(f"⚠️ 删除目录失败: {folder} ({e})")
+            # ====== ✅ 新增逻辑结束 ======
+
+        except Exception as e:
+            logger.exception(f"❌ 增量上传失败 barcode={folder_barcode}: {e}")
+
+        time.sleep(1.5)
 
     if updated:
         _save_cache(cache)

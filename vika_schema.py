@@ -27,6 +27,17 @@ FIELD_MAPS = {
         "abnormalPhotos": "异常图片",
         "abnormal": "异常",
     },
+
+# ✅ 新增收货数据表
+    "dst0sw55Mj11dMbHLD": {
+        "entryDate": "入仓时间",
+        "customerId": "客户代码",
+        "packageNo": "入仓包裹单号",
+        "packageQty": "单个包裹数量",
+        "remark": "备注",
+        "abnormalPhotos": "异常图片",
+        "abnormal": "异常",
+    },
 }
 
 # 字段类型（用于类型转换；按需补全）
@@ -45,6 +56,16 @@ FIELD_TYPES = {
     },
 
     "dstsnDVylQhjuBiSEo": {
+        "entryDate": "datetime",   # 入仓时间
+        "customerId": "text",      # 客户代码
+        "packageNo": "text",       # 入仓包裹单号
+        "packageQty": "number",    # 单个包裹数量
+        "remark": "text",          # 备注
+        "abnormalPhotos": "text",
+        "abnormal": "boolean"
+    },
+
+"dst0sw55Mj11dMbHLD": {
         "entryDate": "datetime",   # 入仓时间
         "customerId": "text",      # 客户代码
         "packageNo": "text",       # 入仓包裹单号

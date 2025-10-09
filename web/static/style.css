@@ -282,10 +282,11 @@
 .form-group input,
 .form-group textarea {
     flex: 1;
-    padding: 8px;
+    padding: 16px;           /* ✅ 从 8px 改为 12px，让输入框上下更高 */
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
+    font-size: 20px;         /* ✅ 新增字体大小（更清晰） */
 }
 
 .form-group textarea {

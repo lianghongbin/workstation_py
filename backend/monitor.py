@@ -1,18 +1,12 @@
 import threading
-import logging
+from workstation_logger import workstation_logger
 from backend.attachment import run_abnormal_upload_sync, run_missing_photo_sync  # ✅ 修正导入
 from vika_client import VikaClient
 
 # ==========================================================
 # ========== 日志配置 ==========
 # ==========================================================
-logger = logging.getLogger("monitor")
-logger.setLevel(logging.INFO)
-if not logger.handlers:
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+logger = workstation_logger("monitor")
 
 # ==========================================================
 # ========== 全局控制标志（防止重复启动） ==========

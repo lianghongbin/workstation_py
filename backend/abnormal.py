@@ -20,7 +20,6 @@ def set_abnormal():
     - 若不同，则更新“异常”字段。
     """
     try:
-        print(0)
         data = request.get_json(force=True)
         fields = data.get("fields", {})  # ✅ 保留原前端结构
         package_no = fields.get("packageNo")
@@ -37,12 +36,24 @@ def set_abnormal():
             return jsonify({"success": False, "message": "查询失败，请稍后重试"})
 
         records = query_result.get("data", [])
+        print(records)
         if not records:
             return jsonify({"success": False, "message": f"未找到包裹单号：{package_no}"})
 
         record = records[0]
         record_id = record.get("recordId")
-        current_abnormal = record.get("异常")
+        current_abnormal = record.get("abnormal")
+
+        print(current_abnormal)
+
+        # ✅ 【新增逻辑】防止重复标记相同单号
+        # 如果数据库里已经有这个包裹单号，并且状态不是 None，
+        # 则说明已经被操作过一次，提示用户无需再次操作。
+        if current_abnormal:
+            return jsonify({
+                "success": False,
+                "message": f"包裹单号 {package_no} 已经设置过异常！"
+            })
 
         # ✅ 第二步：如果状态未变化，直接返回成功
         if current_abnormal == abnormal:

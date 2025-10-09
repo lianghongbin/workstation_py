@@ -20,7 +20,7 @@ def add_receiver():
         data = request.get_json(force=True)
         fields = data.get("fields", {})
         package_no = fields.get("packageNo")
-        print(package_no)
+
         # ✅ 非空检查
         if not package_no:
             return jsonify({"success": False, "message": "入仓包裹单号不能为空"})
