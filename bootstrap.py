@@ -1,8 +1,8 @@
 import os
 
 from flask import Flask
-from backend import main, receiver, ship, ship_query, ship_processed, abnormal
-from backend.monitor import start_all_monitors, AbnormalAttachmentMonitor
+from backend import main, receiver, ship, ship_query, ship_processed, abnormal, sorting
+from backend.monitor import start_all_monitors
 
 WATCH_ROOT = "./photos"  # 或 /data/photos
 
@@ -18,6 +18,7 @@ def create_app():
     app.register_blueprint(ship_query.bp)
     app.register_blueprint(ship_processed.bp)
     app.register_blueprint(abnormal.bp)
+    app.register_blueprint(sorting.bp)
 
     return app
 
@@ -29,4 +30,4 @@ if __name__ == '__main__':
     if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         start_all_monitors(WATCH_ROOT, 10)
     # 启动 Web 服务，默认首页走 main 蓝图 -> main.html
-    app.run(host="0.0.0.0", port=80, debug=False)
+    app.run(host="0.0.0.0", port=80, debug=True)

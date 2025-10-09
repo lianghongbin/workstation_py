@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>智能分拣系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='sorting.css') }}">
+</head>
+<body>
+<div class="top-area">
+    <h2>智能分拣系统</h2>
+    <form id="scanForm" autocomplete="off">
+        <div class="input-wrap">
+            <input type="text" id="skuInput" name="sku" placeholder="" autofocus required>
+            <span class="fake-ph">请扫描或输入 SKU</span>
+        </div>
+        <button id="submitBtn" type="submit">提交</button>
+    </form>
+</div>
+
+<!-- ✅ 底部篮号显示区域 -->
+<div id="resultBox">
+    <div id="skuLabel">等待扫描...</div>
+    <div id="boxNumber">--</div>
+</div>
+
+<!-- ✅ 新增重置区域（在 basketPanel 上面） -->
+<div id="resetPanel">
+    <a href="javascript:void(0)" id="resetBaskets">重置篮子</a>
+</div>
+
+<!-- ✅ 右侧篮子列表 -->
+<div id="basketPanel">
+    <h3>篮子状态</h3>
+    <div id="basketList"></div>
+</div>
+
+
+<!-- ✅ 分配记录列表 -->
+<div id="historyPanel">
+    <h3>最近分配记录</h3>
+    <ul id="historyList"></ul>
+</div>
+
+<div id="formMessage" class="form-message"></div>
+
+<script src="{{ url_for('static', filename='sorting.js') }}"></script>
+</body>
+</html>
