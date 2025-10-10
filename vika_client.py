@@ -33,15 +33,16 @@ class VikaClient:
         resp = requests.post(self.base_url, headers=self._headers(), json=payload, timeout=10)
         return resp.json()
 
-    def update_record(self, record_id: str, fields: dict):
+    def update_record(self, record_id: str, fields: dict, convert:str = 'zh2en'):
         # ✅ 如果字段名已经是中文，就不要再映射
         # 判断方式：第一个 key 含中文字符
         first_key = list(fields.keys())[0] if fields else ""
-        if any('\u4e00' <= ch <= '\u9fff' for ch in first_key):
+        if any('\u4e00' <= ch <= '\u9fff' for ch in first_key) or not convert:
             fields_mapped = fields  # 已是中文，不映射
         else:
-            fields_mapped = translate_fields(self.datasheet_id, fields)
+            fields_mapped = translate_fields(self.datasheet_id, fields, direction =convert)
 
+        print(fields_mapped)
         payload = {
             "records": [{"recordId": record_id, "fields": fields_mapped}],
             "fieldKey": "name"

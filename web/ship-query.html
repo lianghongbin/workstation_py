@@ -18,12 +18,12 @@
 <table id="shipmentTable">
     <thead>
     <tr>
-        <th>产品条码</th>
-        <th>箱数</th>
-        <th>QTY</th>
-        <th>提交时间</th>
-        <th>换标</th>
-        <th>FBA</th>
+        <th>旧产品条码</th>
+        <th>新产品标签</th>
+        <th>FBA标签</th>
+        <th>Shipping标签</th>
+        <th>托盘标签</th>
+        <th>装箱数据</th>
         <th>面单操作</th>
     </tr>
     </thead>
@@ -31,18 +31,28 @@
     {% for r in records %}
     <tr data-id="{{ r.recordId }}">
         <td>{{ r.barcode }}</td>
-        <td>{{ r.cartons }}</td>
-        <td>{{ r.qty }}</td>
-        <td><span class="time" data-time="{{ r.createdAt }}"></span></td>
         <td>
             {% for lbl in r.changeLabels %}
-            <a href="{{ lbl.url }}" target="_blank">{{ lbl.name }}</a><br>
+            <a href="/ship_query/file/view?url={{ lbl.url | urlencode }}" target="_blank">{{ lbl.name }}</a><br>
             {% endfor %}
         </td>
         <td>
             {% for lbl in r.fbaLabels %}
-            <a href="{{ lbl.url }}" target="_blank">{{ lbl.name }}</a><br>
+            <a href="/ship_query/file/view?url={{ lbl.url | urlencode }}" target="_blank">{{ lbl.name }}</a><br>
             {% endfor %}
+        </td>
+        <td>
+            {% for lbl in r.shippingLabels %}
+            <a href="/ship_query/file/view?url={{ lbl.url | urlencode }}" target="_blank">{{ lbl.name }}</a><br>
+            {% endfor %}
+        </td>
+        <td>
+            {% for lbl in r.palletLabels %}
+            <a href="/ship_query/file/view?url={{ lbl.url | urlencode }}" target="_blank">{{ lbl.name }}</a><br>
+            {% endfor %}
+        </td>
+        <td>
+          <a href="javascript:void(0)" onclick="openPackingOverlay('{{ r.recordId }}')">完善</a>
         </td>
         <td>
             <a href="javascript:void(0)" onclick="handleClick('view', this)">查看</a>&nbsp;
@@ -89,6 +99,61 @@
         <button class="print-btn" onclick="printLabel()">打印面单</button>
     </div>
 </div>
+
+
+<!-- ✅ 装箱数据浮层（完善 / 修改） -->
+<div id="packingOverlay" class="overlay">
+  <div class="overlay-content">
+    <span class="overlay-close" onclick="closePackingOverlay()">✖</span>
+
+    <div class="form-container">
+      <h2 id="packingTitle">完善装箱数据</h2>
+
+      <form id="packingForm">
+        <input type="hidden" id="recordId" />
+
+        <div class="form-group">
+          <label for="barcode">产品条码</label>
+          <input type="text" id="barcode" name="barcode" readonly />
+        </div>
+
+        <div class="form-group">
+          <label for="cartons">箱&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;数</label>
+          <input type="number" id="cartons" name="cartons" min="1" required />
+        </div>
+
+        <div class="form-group">
+          <label for="qty">每箱数量</label>
+          <input type="number" id="qty" name="qty" min="1" required />
+        </div>
+
+        <div class="form-group">
+          <label for="weight">重量(LB)</label>
+            <input type="number" step="0.01" id="weight" name="weight" required />
+        </div>
+
+        <div class="form-group">
+          <label for="spec">箱&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;规</label>
+          <input list="carton-options" id="spec" name="spec" placeholder="可选择或输入" required />
+          <datalist id="carton-options">
+            <option value="22x18x12">22x18x12-296</option>
+            <option value="18x16x12">18x16x12-220</option>
+          </datalist>
+        </div>
+
+        <div class="form-group">
+          <label for="remark">备&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;注</label>
+          <textarea id="remark" name="remark" rows="3"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
     window.records = JSON.parse('{{ records | tojson | safe }}');
     window.recordMap = {};

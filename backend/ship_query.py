@@ -73,6 +73,7 @@ def api_print_label():
     """
     接收前端打印申请，调用本机默认打印机
     """
+
     try:
         data = request.get_json(force=True)
         if not data:
@@ -97,7 +98,6 @@ def ship_process():
         data = request.get_json(force=True)  # {record: {...}}
         record = data.get("record") or {}
         record_id = record.get("recordId")
-        print(record_id)
 
         if not record_id:
             return jsonify({"success":False, "message": "缺少 recordId"}), 400
@@ -113,3 +113,59 @@ def ship_process():
     except Exception as e:
         print(e)
         return jsonify({"success": False, "message": f"处理失败: {e}"}), 500
+
+
+# ========================================
+# 🚀 2️⃣ 修改装箱数据
+# ========================================
+@bp.route("/ship_query/packing/update", methods=["POST"])
+def update_packing_data():
+    """
+    修改装箱数据（数量、箱数、QTY、重量、箱规）
+    """
+    try:
+        data = request.get_json(force=True)
+        record_id = data.get("recordId")
+        fields = data.get("fields", {})
+
+        # ✅ 更新数据
+        update_result = vika.update_record(record_id, fields, convert='en2zh')
+        if not update_result.get("success"):
+            print(update_result)
+            return jsonify({"success": False, "message": f"更新失败：{update_result}"})
+
+        return jsonify({"success": True, "message": "装箱数据已更新"})
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+
+import requests
+from flask import Response, request
+
+@bp.route("/ship_query/file/view", methods=["GET"])
+def proxy_vika_file():
+    """
+    🔄 从 Vika CDN 拉取文件并转发（去掉 Referer 限制）
+    示例：
+        /ship_query/file/view?url=https://s1.vika.cn/space/2025/10/10/xxxxxx
+    """
+    file_url = request.args.get("url")
+    if not file_url:
+        return Response("缺少参数 url", status=400)
+
+    try:
+        headers = {
+            "User-Agent": request.headers.get("User-Agent", "Mozilla/5.0"),
+            "Referer": "",  # ✅ 不带 Referer 绕过403
+        }
+        resp = requests.get(file_url, headers=headers, stream=True, timeout=15)
+        if resp.status_code != 200:
+            return Response(f"下载失败: {resp.status_code}", status=resp.status_code)
+
+        return Response(
+            resp.iter_content(8192),
+            content_type=resp.headers.get("Content-Type", "application/octet-stream"),
+        )
+    except Exception as e:
+        return Response(f"访问异常: {e}", status=500)

@@ -266,7 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             renderHistoryFromServer(json.logs || []);
 
-            const msg = new SpeechSynthesisUtterance(`请放入 ${randomId} 号篮`);
+            const msg = new SpeechSynthesisUtterance(`${randomId} 号篮`);
             msg.lang = 'zh-CN';
             msg.rate = 1.05;
             speechSynthesis.speak(msg);

@@ -5,7 +5,7 @@ from __future__ import annotations
 # 英文 -> 中文 的“设计映射”（你原来就有）
 FIELD_MAPS = {
     "dstl0nkkjrg2hlXfRk": {   # 出货数据表
-        "barcode": "产品条码",
+        "barcode": "旧产品条码",
         "processed": "处理完成",
         "cartons": "箱数",
         "qty": "每箱数量",
@@ -15,6 +15,8 @@ FIELD_MAPS = {
         "createdAt": "提交时间",
         "changeLabels": "换标标签",
         "fbaLabels": "FBA标签",
+        "shippingLabels": "Shipping标签",
+        "palletLabels": "托盘标",
     },
 
     # ✅ 新增收货数据表
@@ -53,6 +55,8 @@ FIELD_TYPES = {
         "createdAt": "datetime",  # 这里先不做复杂解析，保持原值即可
         "changeLabels": "text",
         "fbaLabels": "text",
+        "shippingLabels": "text",
+        "palletLabels": "text",
     },
 
     "dstsnDVylQhjuBiSEo": {

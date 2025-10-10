@@ -1,11 +1,23 @@
 import os
+import platform
 
-from flask import Flask
+from flask import Flask, json
 from backend import main, receiver, ship, ship_query, ship_processed, abnormal, sorting
 from backend.monitor import start_all_monitors
 
-WATCH_ROOT = "./photos"  # 或 /data/photos
 
+CONFIG_FILE = "config.json"
+system_name = platform.system().lower()  # windows / linux / darwin
+
+WATCH_ROOT = "C:\\ECData"  # 默认
+if os.path.exists(CONFIG_FILE):
+    cfg = json.load(open(CONFIG_FILE, "r", encoding="utf-8"))
+    for key, path in cfg.items():
+        if key in system_name:
+            WATCH_ROOT = path
+            break
+
+WATCH_ROOT = os.path.normpath(WATCH_ROOT)
 
 def create_app():
     # 配置 web 目录作为模板目录和静态资源目录

@@ -165,3 +165,90 @@
 .print-btn:hover {
     background-color: #357abd;
 }
+
+
+
+/* ✅ 装箱浮层样式 */
+/* ✅ 装箱浮层表单横向排版 */
+#packingOverlay .form-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+#packingOverlay .form-group label {
+  width: 100px;           /* 固定宽度，右对齐 */
+  text-align: right;
+  font-size: 15px;
+  color: #333;
+  margin-right: 10px;     /* label 与输入框间距 */
+}
+
+#packingOverlay .form-group input,
+#packingOverlay .form-group textarea,
+#packingOverlay .form-group select {
+  flex: 1;                /* 自动占满剩余空间 */
+  padding: 6px 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#packingOverlay .form-group textarea {
+  height: 60px;
+  resize: vertical;
+}
+
+/* ✅ inline-input 内保持横向居中 */
+#packingOverlay .inline-input {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+#packingOverlay .inline-input input {
+  flex: 1;
+}
+
+#packingOverlay .inline-input .unit {
+  margin-left: 6px;
+  font-size: 14px;
+  color: #777;
+}
+
+/* ✅ 居中浮层：相对工作区正中显示 */
+#packingOverlay .overlay-content {
+  position: fixed;                    /* 相对视口固定 */
+  top: 50%;                           /* 居中 */
+  left: calc(50% - 150px);            /* ✅ 根据右侧栏宽度微调 */
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 10px;
+  width: 480px;                       /* 稍宽一点，输入行更自然 */
+  padding: 25px 40px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 99999;
+}
+
+/* ✅ 让浮层的按钮居中显示 */
+#packingOverlay .form-actions {
+  text-align: center;      /* 水平居中对齐 */
+  margin-top: 20px;        /* 与上方表单留一点间距 */
+}
+
+/* ✅ 按钮美化（可选） */
+#packingOverlay .form-actions button {
+  font-size: 16px;
+  padding: 10px 40px;
+  background-color: #0078d7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#packingOverlay .form-actions button:hover {
+  background-color: #005fa3;
+}

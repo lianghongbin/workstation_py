@@ -97,3 +97,60 @@ function handleClick(action, el) {
             });
     }
 }
+
+// ✅ 打开浮层并显示现有数据
+// ✅ 打开浮层并显示现有数据
+function openPackingOverlay(recordId) {
+  const record = window.recordMap[recordId];
+  if (!record) return alert("记录未找到");
+
+  // ✅ 写入 recordId
+  document.getElementById("recordId").value = recordId;
+
+  // ✅ 兼容中英文字段名
+  document.getElementById("barcode").value = record["产品条码"] ?? record.barcode ?? "";
+  document.getElementById("cartons").value = record["箱数"] ?? record.cartons ?? "";
+  document.getElementById("qty").value = record["每箱数量"] ?? record["QTY"] ?? record.qty ?? "";
+  document.getElementById("weight").value = record["重量"] ?? record.weight ?? "";
+  document.getElementById("spec").value = record["箱规"] ?? record.spec ?? "";
+  document.getElementById("remark").value = record["备注"] ?? record.remark ?? "";
+
+  // ✅ 显示浮层
+  document.getElementById("packingOverlay").style.display = "block";
+}
+
+// ✅ 关闭浮层
+function closePackingOverlay() {
+  document.getElementById("packingOverlay").style.display = "none";
+}
+
+// ✅ 表单提交逻辑
+document.getElementById("packingForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const recordId = document.getElementById("recordId").value;
+  const fields = {
+  "cartons": Number(document.getElementById("cartons").value),
+  "qty": Number(document.getElementById("qty").value),
+  "weight": Number(document.getElementById("weight").value),
+  "spec": document.getElementById("spec").value.trim(),
+  "remark": document.getElementById("remark").value.trim()
+};
+
+  const endpoint = "/ship_query/packing/update"; // 直接修改接口
+
+  const resp = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ recordId, fields })
+  });
+
+  const data = await resp.json();
+  if (data.success) {
+    alert("装箱数据已更新！");
+    Object.assign(window.recordMap[recordId], fields);
+    closePackingOverlay();
+  } else {
+    alert("更新失败：" + data.message);
+  }
+});

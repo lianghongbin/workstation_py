@@ -18,12 +18,14 @@
 <table id="shipmentTable">
     <thead>
     <tr>
-        <th>产品条码</th>
+        <th>旧产品条码</th>
         <th>箱数</th>
         <th>QTY</th>
-        <th>提交时间</th>
-        <th>换标</th>
-        <th>FBA</th>
+        <th>换标标签</th>
+        <th>FBA标签</th>
+        <th>Shipping标签</th>
+        <th>托盘标签</th>
+
     </tr>
     </thead>
     <tbody>
@@ -32,15 +34,26 @@
   <td>{{ r.barcode }}</td>
   <td>{{ r.cartons }}</td>
   <td>{{ r.qty }}</td>
-        <td><span class="time" data-time="{{ r.createdAt }}"></span></td>
   <td>
     {% for lbl in r.changeLabels %}
-      <a href="{{ lbl.url }}" target="_blank">{{ lbl.name }}</a><br>
+      <a href="/ship_query/file/view?url={{ lbl.url | urlencode }}" target="_blank">{{ lbl.name }}</a><br>
     {% endfor %}
   </td>
   <td>
     {% for lbl in r.fbaLabels %}
-      <a href="{{ lbl.url }}" target="_blank">{{ lbl.name }}</a><br>
+            <a href="/ship_query/file/view?url={{ lbl.url | urlencode }}" target="_blank">{{ lbl.name }}</a><br>
+    {% endfor %}
+  </td>
+
+  <td>
+    {% for lbl in r.shippingLabels %}
+            <a href="/ship_query/file/view?url={{ lbl.url | urlencode }}" target="_blank">{{ lbl.name }}</a><br>
+    {% endfor %}
+  </td>
+
+  <td>
+    {% for lbl in r.palletLabels %}
+            <a href="/ship_query/file/view?url={{ lbl.url | urlencode }}" target="_blank">{{ lbl.name }}</a><br>
     {% endfor %}
   </td>
 </tr>
