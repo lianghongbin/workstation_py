@@ -1,238 +1,270 @@
-/* =========================
-   智能分拣系统样式（最终版）
-   ========================= */
+/* ============================================================
+🧩 智能分拣系统布局样式 —— 左右结构（左：扫码 + 结果，右：篮子 + 历史记录）
+============================================================ */
 
 body {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    min-height: 100vh;
-    background: #f9f9f9;
-    font-family: "Microsoft YaHei", sans-serif;
     margin: 0;
-    padding: 40px 0;
+    font-family: "Microsoft YaHei", Arial, sans-serif;
+    background: #f8f9fb;
+    color: #222;
+    height: 100vh;
+    overflow: hidden;
 }
 
-/* ===== 顶部区域 ===== */
-.top-area {
-    text-align: center;
+/* ============================================================
+🟦 主容器：左右布局
+============================================================ */
+#mainContainer {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    padding: 16px;
+    box-sizing: border-box;
+    gap: 16px;
 }
 
-h2 {
-    font-size: 22px;
-    color: #333;
-    margin: 0 0 36px 0; /* ↑ 间距加大 */
-    letter-spacing: 1px;
-}
-
-#scanForm {
+/* ============================================================
+🟩 左侧：扫码 + 结果（宽60%）
+============================================================ */
+#leftPanel {
+    flex: 0 0 60%;
     display: flex;
     flex-direction: column;
-    align-items: center;
-}
-
-.input-wrap {
-  position: relative;
-  display: inline-block;
-}
-
-/* ✅ 输入框 */
-#skuInput {
-    font-size: 24px;
-    padding: 10px 20px;
-    width: 360px;
-    border: 2px solid #0078d7;
-    border-radius: 8px;
-    text-align: center;
-    outline: none;
-}
-
-/* ✅ 自绘 placeholder 样式 */
-.fake-ph {
-  position: absolute;
-  left: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;          /* 小号文字 */
-  color: #b6c2cc;           /* 淡灰蓝色 */
-  pointer-events: none;
-  transition: opacity .2s;
-}
-
-/* 输入框聚焦或有内容时隐藏提示文字 */
-.input-wrap input:focus + .fake-ph,
-.input-wrap input:not(:placeholder-shown) + .fake-ph {
-  opacity: 0;
-}
-
-/* 输入框获得焦点时高亮 */
-#skuInput:focus {
-    border-color: #005fa3;
-    box-shadow: 0 0 8px rgba(0,120,215,0.3);
-}
-
-/* 提交按钮 */
-#submitBtn {
-    margin-top: 15px;
-    font-size: 20px;
-    padding: 10px 40px;
-    background-color: #0078d7;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
-#submitBtn:hover {
-    background-color: #005fa3;
-}
-
-/* ===== 底部篮号显示区 ===== */
-#resultBox {
-    width: 45%;
-    text-align: center;
-    position: fixed;
-    bottom: 220px;
-    left: 50%;
-    transform: translateX(-50%);
-    min-height: 220px;
-    border: 2px dashed #a0c8f0;
-    border-radius: 16px;
     background: #fff;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+/* 🟦 扫码区靠上，占固定高度（约40%） */
+.top-area {
+    flex: 0 0 40%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
+    justify-content: flex-start;
+    padding-top: 10px;
+    gap: 20px;
 }
-#boxNumber {
-    font-size: 160px;
-    font-weight: bold;
-    color: #0078d7;
-    margin: 0;
-    line-height: 1;
-    transition: color .3s, transform .3s;
+
+/* 🟨 中间空白区（留呼吸空间） */
+#leftSpacer {
+    flex: 0 0 20%;
 }
-#boxNumber.flash {
-    color: #2ecc71;
-    transform: scale(1.15);
+
+/* 🟧 结果区靠下，占固定高度（约40%） */
+#resultBox {
+    flex: 0 0 40%;
+    border: 1px dashed #aaa;
+    border-radius: 8px;
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 18px;
+    width: 70%;
+    margin: 10px auto 0 auto;
 }
+
 #skuLabel {
-    font-size: 26px;
-    color: #444;
+    font-size: 18px;
     margin-bottom: 10px;
 }
 
-/* ===== 右侧篮子状态栏 ===== */
-#basketPanel {
-    position: fixed;
-    top: 60px;
-    right: 15px;
-    bottom: 20px;
-    width: 310px;
-    background: #ffffffd9;
-    border-left: 1px solid #ddd;
-    padding: 10px 8px 15px 8px;
-    box-shadow: -2px 0 10px rgba(0,0,0,0.05);
-    border-radius: 8px;
+#boxNumber {
+    font-size: 42px;
+    font-weight: bold;
+    color: #1565c0;
+}
+
+/* 扫码输入 */
+#scanForm {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+#skuInput {
+    width: 400px;
+    height: 45px;
+    padding: 4px 8px;
+    font-size: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#submitBtn {
+    height: 50px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 4px;
+    background: #1976d2;
+    color: white;
+    cursor: pointer;
+}
+
+#submitBtn:hover {
+    background: #145ca8;
+}
+
+/* ============================================================
+🟧 右侧：篮子 + 历史记录（宽40%）
+============================================================ */
+#rightPanel {
+    flex: 0 0 40%;
     display: flex;
     flex-direction: column;
+    height: 100%;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    box-sizing: border-box;
+    justify-content: space-between; /* 确保历史记录贴底 */
 }
 
-/* 标题 */
-#basketPanel h3 {
-    text-align: center;
-    margin: 0 0 10px 0;
+#basketHeader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+#basketHeader h3 {
+    margin: 0;
     font-size: 16px;
+    font-weight: 600;
     color: #333;
+    text-align: center;
+    width: 100%;
 }
 
-/* ✅ 紧凑版篮子布局 */
+#resetBaskets {
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-size: 14px;
+    color: #1976d2;
+    text-decoration: none;
+    line-height: 32px;
+    padding-right: 6px;
+}
+
+#resetBaskets:hover {
+    text-decoration: underline;
+}
+
+/* ============================================================
+📦 篮子布局（紧凑优化）
+============================================================ */
 #basketList {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 2px !important;           /* 总间距统一为2px */
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+    gap: 4px;
+    align-items: stretch; /* 确保所有项高度一致 */
 }
 
 .basket-item {
-    position: relative;
-    border: 1px dashed #bcd8f3; /* 虚线更浅 */
-    border-radius: 5px;
-    background: #fff;
+    background: #f0f6ff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: 68px;
+    height: 48px; /* 统一高度 */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    font-size: 12px;         /* 字体略小 */
-    color: #333;
-    transition: background .25s, transform .25s, opacity .25s;
-    cursor: default;
-    margin: 3px !important;          /* 去掉自身外边距 */
-    height: 46px !important;       /* 稍微低一点，紧凑 */
+    padding: 4px 0;
+    position: relative;
+    transition: all 0.2s;
+    line-height: 1.2;
+    box-sizing: border-box; /* 包含边框和内边距 */
 }
 
 .basket-item:hover {
-    border-color: #0078d7;
-    transform: scale(1.02); /* 鼠标移上轻微放大 */
+    cursor: pointer;
 }
 
-/* 删除/恢复按钮 */
+.basket-item div:first-child {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1565c0;
+}
+
+.basket-num {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.basket-item.deleted {
+    background: #eee;
+    color: #999;
+    border: 1px dashed #bbb;
+}
+
+.basket-item.has-sku .basket-delete {
+    cursor: not-allowed;
+    opacity: 0.5;
+    pointer-events: none; /* 完全禁用交互 */
+}
+
+.basket-item.flash {
+    animation: flash 0.4s ease-in-out;
+}
+
+@keyframes flash {
+    0% { background: #c8e6c9; }
+    100% { background: #f0f6ff; }
+}
+
+/* 删除按钮 */
 .basket-delete {
     position: absolute;
     top: 3px;
     right: 5px;
-    font-size: 14px;
-    color: #999;
-    opacity: 0;
-    transition: opacity .2s, color .2s;
+    font-size: 12px;
     cursor: pointer;
+    color: #666;
 }
 
-/* =========================================================
-   🟢 新增：右上角启用/禁用按钮样式（代替原 basket-delete）
-   ========================================================= */
-.basket-toggle {
-    position: absolute;
-    top: 3px;
-    right: 5px;
-    font-size: 14px;
-    color: #999;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-.basket-toggle.restore { color: #2ecc71; } /* 绿色✔表示可恢复 */
-.basket-toggle:hover { color: #ff4d4d; }   /* 悬停变红 */
-
-/* =========================================================
-   🟢 新增：右下角删除按钮样式（仅最后一个篮子显示）
-   ========================================================= */
+/* ============================================================
+🗑️ 右下角删除图标（basket-remove）
+============================================================ */
 .basket-remove {
     position: absolute;
-    bottom: 3px;
-    right: 5px;
-    font-size: 14px;
-    color: #aaa;
+    right: 10px;
+    bottom: 15px;
+    width: 5px;
+    height: 5px;
+    object-fit: contain;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.2s;
 }
-.basket-item:hover .basket-remove { opacity: 1; } /* 悬停显示 */
-.basket-remove:hover { color: #e74c3c; }          /* 悬停红色 */
-.basket-item:hover .basket-delete { opacity: 1; }
-.basket-delete:hover { color: #ff4d4d; }
-.basket-delete.restore:hover { color: #2ecc71; }
 
-/* Tooltip */
-.basket-delete::after {
+.basket-item:last-child .basket-remove {
+    display: block; /* 仅最后一个篮子显示 */
+}
+
+/* 悬停时高亮并放大 */
+.basket-remove:hover {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+/* 悬停提示 tooltip */
+.basket-remove::after {
     content: attr(data-tip);
     position: absolute;
-    right: 110%;
-    top: 0;
-    background: rgba(0,0,0,.75);
+    bottom: 125%;
+    right: 0;
+    background: rgba(0, 0, 0, 0.75);
     color: #fff;
     font-size: 12px;
     padding: 3px 6px;
@@ -240,118 +272,72 @@ h2 {
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
-    transform: translateY(-4px);
-    transition: opacity .2s;
-}
-.basket-delete:hover::after { opacity: 1; }
-
-/* 状态样式 */
-.basket-item.flash {
-    background: #b7f5c0;
-    border-color: #2ecc71;
-    transform: scale(1.08);
-}
-.basket-item.deleted {
-    background: #f2f2f2;
-    color: #aaa;
-    border-color: #ccc;
-}
-.basket-num {
-    font-weight: bold;
-    color: #0078d7;
-    font-size: 14px;
+    transform: translateY(4px);
+    transition: all 0.2s ease-in-out;
 }
 
-/* ===== 底部消息提示 ===== */
-#formMessage {
-    position: fixed;
-    bottom: 40px;
-    text-align: center;
-    font-size: 22px;
-    width: 100%;
+/* 鼠标悬停时显示 tooltip */
+.basket-remove:hover::after {
+    opacity: 1;
+    transform: translateY(0);
 }
-.form-message.success { color: #0078d7; }
-.form-message.error { color: #ff4d4d; }
 
-/* ===== 添加篮子按钮 ===== */
+/* 添加按钮 */
 .basket-add {
-    height: 46px;                     /* ✅ 区块高度与普通篮子一致 */
-    border: 1px dashed #c8def5;       /* ✅ 边框更细更浅 */
+    border: 2px dashed #bbb;
     border-radius: 6px;
-    background: #fafcff;              /* ✅ 背景更淡 */
-    color: #0078d7;
-    font-size: 24px;                  /* ✅ 字号略小，与视觉统一 */
+    width: 68px;
+    height: 48px; /* 统一为 basket-item 高度 */
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #bbb;
     cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-    margin: 3px !important;          /* 去掉自身外边距 */
-}
-.basket-add:hover {
-    background: #eef6ff;              /* ✅ 淡蓝 hover 效果 */
-    border-color: #99c6ef;
+    box-sizing: border-box; /* 包含边框 */
 }
 
-/* ===== 最近分配记录 ===== */
+.basket-add:hover {
+    color: #1976d2;
+    border-color: #1976d2;
+}
+
+/* ============================================================
+📜 历史记录区（右下角，独立视觉空间）
+============================================================ */
 #historyPanel {
-    position: fixed;
-    right: 15px;
-    bottom: 20px;
-    width: 310px;
-    background: #ffffffd9;
-    border-left: 1px solid #ddd;
-    border-top: 1px solid #ddd;
-    border-radius: 8px 8px 0 0;
-    box-shadow: -2px -2px 10px rgba(0,0,0,0.05);
-    padding: 10px 8px 12px 8px;
+    flex: 0 0 160px;
+    background: #f6f8fb;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    padding: 10px 12px;
+    overflow-y: auto;
+    margin-top: auto; /* 自动填充上部空间，贴底 */
 }
 
 #historyPanel h3 {
-    text-align: center;
-    margin: 0 0 8px 0;
+    margin: 0 0 8px;
     font-size: 15px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 4px;
     color: #333;
 }
 
 #historyList {
     list-style: none;
-    margin: 0;
     padding: 0;
-    max-height: 140px;
-    overflow-y: auto;
+    margin: 0;
+    font-size: 13px;
 }
 
 #historyList li {
-    font-size: 13px;
-    color: #444;
-    padding: 3px 6px;
-    border-bottom: 1px solid #eee;
-}
-#historyList li:first-child {
-    font-weight: bold;
-    color: #0078d7;
+    padding: 4px 0;
+    border-bottom: 1px dashed #eaeaea;
 }
 
-/* ✅ 重置篮子按钮区域（独立在篮子面板上方） */
-#resetPanel {
-    position: fixed;
-    top: 20px;
-    right: 15px;
-    background: #ffffffd9;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 6px 10px;
-    box-shadow: -2px 2px 6px rgba(0,0,0,0.05);
-    text-align: right;
-}
-#resetPanel a {
-    font-size: 13px;
-    color: #0078d7;
-    text-decoration: none;
-    cursor: pointer;
-}
-#resetPanel a:hover {
-    color: #005fa3;
-    text-decoration: underline;
+/* ✅ 分配提示：显示在扫码结果框正下方 */
+#resultBox {
+    position: relative; /* 作为定位参照 */
+    overflow: visible;  /* ✅ 防止提示被裁掉 */
 }

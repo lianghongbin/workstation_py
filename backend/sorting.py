@@ -63,14 +63,14 @@ def api_init():
     data = load_data()
     baskets = data["baskets"]
 
-    # 🟩 确保每个篮子都带上 sku 字段
+    # ✅ 确保返回时带上正确数量和 SKU 状态
     enriched_baskets = []
     for b in baskets:
         enriched_baskets.append({
             "id": b["id"],
             "count": b.get("count", 0),
             "deleted": b.get("deleted", False),
-            "sku": b.get("sku", "")  # 🟩 新增关键字段
+            "sku": b.get("sku", "")
         })
 
     return jsonify({
@@ -110,22 +110,66 @@ def api_basket_modify():
 # ==========================================================
 @bp.route("/api/basket_toggle", methods=["POST"])
 def api_toggle_basket():
+    """
+    启用 / 禁用 / 清空篮子
+    前端参数：
+        { id: 3, action: "delete" | "restore" | "clear" }
+
+    功能：
+        - delete: 禁用篮子（但不清空 SKU 或数量）
+        - restore: 恢复篮子（保持数量和 SKU 不变）
+        - clear: 清空篮子的 SKU 和数量
+    """
     req = request.get_json()
     bid = req.get("id")
     action = req.get("action")
 
-    data = load_data()
-    for b in data["baskets"]:
-        if b["id"] == bid:
-            if action == "delete":
-                b["deleted"] = True
-                b["count"] = 0
-            elif action == "restore":
-                b["deleted"] = False
-            break
+    if bid is None or action not in ["delete", "restore", "clear"]:
+        return jsonify({"success": False, "message": "参数错误"}), 400
 
+    # 统一转换 ID 类型，避免字符串比较错误
+    try:
+        bid = int(bid)
+    except ValueError:
+        return jsonify({"success": False, "message": "无效的篮子 ID"}), 400
+
+    data = load_data()
+    baskets = data.get("baskets", [])
+    sku_map = data.get("sku_map", {})
+
+    target_basket = next((b for b in baskets if b["id"] == bid), None)
+    if not target_basket:
+        return jsonify({"success": False, "message": f"未找到 {bid} 号篮子"}), 404
+
+    # 🟨 操作逻辑
+    if action == "delete":
+        target_basket["deleted"] = True
+
+    elif action == "restore":
+        target_basket["deleted"] = False
+
+    elif action == "clear":
+        # 清空数量和 SKU，同时更新 sku_map
+        old_sku = target_basket.get("sku")
+        target_basket["count"] = 0
+        target_basket["sku"] = ""
+        target_basket["deleted"] = False  # 确保不是禁用状态
+        # 从映射表中移除旧 SKU
+        if old_sku and old_sku in sku_map:
+            del sku_map[old_sku]
+
+    # 保存数据
+    data["baskets"] = baskets
+    data["sku_map"] = sku_map
     save_data(data)
-    return jsonify({"success": True, "id": bid, "action": action})
+
+    # ✅ 返回执行结果
+    return jsonify({
+        "success": True,
+        "id": bid,
+        "action": action,
+        "message": f"{bid}号篮子操作成功：{action}"
+    })
 
 
 # ==========================================================
@@ -164,6 +208,13 @@ def api_reset():
 #   - 若 SKU 不存在 → 分配第一个空篮子
 #   - 若无空篮 → 提示用户“篮子数量不足，请手动添加”
 # ==========================================================
+# ==========================================================
+# ✅ 功能 5：扫码 / 手动输入 SKU 分配篮子（升级版）
+# 规则：
+#   1️⃣ SKU 不区分大小写（统一转大写）
+#   2️⃣ 若 SKU 已存在但篮子被禁用 → 返回提示，不重新分配
+#   3️⃣ 若 SKU 不存在 → 分配第一个空篮
+# ==========================================================
 @bp.route("/api/assign", methods=["POST"])
 def api_assign():
     req = request.get_json()
@@ -171,54 +222,86 @@ def api_assign():
     if not sku:
         return jsonify({"success": False, "message": "SKU 不能为空"})
 
+    # ✅ 统一转小写，确保一致性
+    sku = sku.lower()
+
     data = load_data()
     baskets = data["baskets"]
     sku_map = data.setdefault("sku_map", {})
     logs = data.setdefault("logs", [])
 
-    # 🟩 STEP 1: 判断 SKU 是否已有归属
-    if sku in sku_map:
-        basket_id = sku_map[sku]
-        # 原篮子若已删除，重新分配
-        valid_basket = next((b for b in baskets if b["id"] == basket_id and not b["deleted"]), None)
-        if not valid_basket:
-            basket_id = None
-        else:
-            # 🟩 新增：如果历史数据里没存过该篮子的 sku，则补上（用于前端 hover 提示）
-            if not valid_basket.get("sku"):
-                valid_basket["sku"] = sku
-    else:
-        basket_id = None
+    # ==========================================================
+    # ✅ STEP 1：优先检查所有篮子（包括禁用的）
+    # ==========================================================
+    # 有时候 sku_map 不完全同步，用篮子数据兜底
+    basket_by_sku = next(
+        (b for b in baskets if b.get("sku", "").lower() == sku),
+        None
+    )
 
-    # 🟩 STEP 2: 无归属 → 分配空篮（修改后：按编号升序找最小可用篮子）
-    if basket_id is None:
-        # 🟢 原逻辑是 next(...)，现在改为排序后取编号最小的空篮
-        available_baskets = sorted(
-            [b for b in baskets if not b["deleted"] and b["count"] == 0],
-            key=lambda x: int(x["id"])
-        )
-        if available_baskets:
-            empty_basket = available_baskets[0]
-            basket_id = empty_basket["id"]
-            sku_map[sku] = basket_id
-            empty_basket["sku"] = sku  # 🟩 新增：把该篮子的 sku 记录下来（用于前端 hover 提示）
-        else:
-            # 🟥 无空篮可用 → 提示前端手动增加
+    # 优先从 sku_map 获取
+    basket_id = sku_map.get(sku)
+    if basket_id:
+        basket = next((b for b in baskets if b["id"] == basket_id), None)
+    else:
+        basket = basket_by_sku
+
+    # ==========================================================
+    # ✅ STEP 2：命中已存在的 SKU
+    # ==========================================================
+    if basket:
+        if basket.get("deleted"):
+            # 🟥 被禁用
             return jsonify({
                 "success": False,
-                "reason": "NO_EMPTY",
-                "message": "篮子数量不足，请添加篮子后再试。"
+                "reason": "BASKET_DISABLED",
+                "message": f"SKU {sku} 对应的 {basket['id']} 号篮子已被暂停，请先恢复再使用。"
             })
 
-    # 🟩 STEP 3: 数量 +1 并确保写回 sku
-    for b in baskets:
-        if b["id"] == basket_id:
-            b["count"] += 1
-            b["sku"] = sku  # 🟩 新增：确保当前篮子的 SKU 一定写回
-            count = b["count"]
-            break
+        # ✅ 启用状态 → 增加数量
+        basket["count"] = basket.get("count", 0) + 1
+        basket["sku"] = sku
+        sku_map[sku] = basket["id"]
 
-    # 🟩 STEP 4: 写入日志
+        # ✅ 写入日志
+        logs.insert(0, {
+            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "sku": sku,
+            "basket": basket["id"]
+        })
+        logs[:] = logs[:50]
+
+        save_data(data)
+        return jsonify({
+            "success": True,
+            "basket": basket["id"],
+            "count": basket["count"],
+            "total": len(baskets),
+            "logs": logs,
+            "sku": sku
+        })
+
+    # ==========================================================
+    # ✅ STEP 3：未分配 → 分配第一个空篮
+    # ==========================================================
+    available_baskets = sorted(
+        [b for b in baskets if not b.get("deleted") and b.get("count", 0) == 0],
+        key=lambda x: int(x["id"])
+    )
+
+    if not available_baskets:
+        return jsonify({
+            "success": False,
+            "reason": "NO_EMPTY",
+            "message": "篮子数量不足，请添加篮子后再试。"
+        })
+
+    empty_basket = available_baskets[0]
+    basket_id = empty_basket["id"]
+    empty_basket["sku"] = sku
+    empty_basket["count"] = 1
+    sku_map[sku] = basket_id
+
     logs.insert(0, {
         "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "sku": sku,
@@ -227,14 +310,13 @@ def api_assign():
     logs[:] = logs[:50]
 
     save_data(data)
-
     return jsonify({
         "success": True,
         "basket": basket_id,
-        "count": count,
+        "count": 1,
         "total": len(baskets),
         "logs": logs,
-        "sku": sku  # 🟩 已有：让前端能记录 SKU
+        "sku": sku
     })
 
 

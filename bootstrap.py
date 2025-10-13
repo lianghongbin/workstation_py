@@ -9,11 +9,15 @@ from backend.monitor import start_all_monitors
 CONFIG_FILE = "config.json"
 system_name = platform.system().lower()  # windows / linux / darwin
 
-WATCH_ROOT = "C:\\ECData"  # 默认
+WATCH_ROOT = "./photos"  # 默认
 if os.path.exists(CONFIG_FILE):
-    cfg = json.load(open(CONFIG_FILE, "r", encoding="utf-8"))
+    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        cfg = json.load(f)
+
     for key, path in cfg.items():
-        if key in system_name:
+        key_lower = key.lower()
+        # ✅ 正确写法：匹配关系反过来！
+        if key_lower in system_name:
             WATCH_ROOT = path
             break
 

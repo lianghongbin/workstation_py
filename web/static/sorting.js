@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const basketList = document.getElementById("basketList");
 
     let totalBaskets = 50; // 初始50个篮子
-    const basketState = {}; // {1: {count, deleted}}
+    const basketState = {}; // {1: {count, deleted, sku}}
 
     // ============================================================
     // 🔹功能 1：页面加载时从后端获取当前篮子状态和日志
@@ -31,8 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (json.success) {
                 totalBaskets = json.baskets.length;
                 basketList.innerHTML = "";
-                json.baskets.forEach(b => {
-                    // 🟩 新增 sku 字段带入本地状态，用于 hover
+                json.baskets.forEach((b) => {
                     basketState[b.id] = { count: b.count, deleted: b.deleted, sku: b.sku || null };
                     basketList.appendChild(createBasketElement(b.id));
                 });
@@ -45,48 +44,58 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ============================================================
-    // ✅ 初始化所有篮子（旧逻辑保留）
+    // ✅ 创建篮子DOM节点（本次主要修改）
     // ============================================================
-    function initBaskets() {
-        basketList.innerHTML = "";
-        for (let i = 1; i <= totalBaskets; i++) {
-            basketState[i] = {count: basketState[i]?.count || 0, deleted: basketState[i]?.deleted || false};
-            basketList.appendChild(createBasketElement(i));
-        }
-        addBasketButton();
-    }
-
-    // ✅ 创建篮子DOM节点
     function createBasketElement(id) {
         const div = document.createElement("div");
         div.className = "basket-item";
         if (basketState[id]?.deleted) div.classList.add("deleted");
+        if (basketState[id]?.sku) div.classList.add("has-sku");
         div.id = `basket-${id}`;
 
-        // 🟩 新增
         const s = basketState[id]?.sku;
         div.title = s ? ("SKU: " + s) : "空篮子";
 
+        // ✅ 每个篮子都带 × 禁用/恢复 按钮
         div.innerHTML = `
             <div>${id}号</div>
             <div class="basket-num">${basketState[id]?.count || 0}</div>
-            <!-- 🟩【修改】：最后一个篮子不显示右上角 delete -->
-            ${(id !== totalBaskets || basketState[id]?.deleted)
-            ? `<span class="basket-delete" data-tip="${basketState[id]?.deleted ? '恢复篮子' : '删除篮子'}">
+            <span class="basket-delete" data-tip="${basketState[id]?.deleted ? '恢复篮子' : '禁用篮子'}">
                 ${basketState[id]?.deleted ? '✔' : '×'}
-            </span>`
-            : ''}
-
-            <!-- ✅ 保留右下角删除 -->
-            ${id === totalBaskets
-            ? '<span class="basket-remove" data-tip="删除篮子">🗑</span>'
-            : ''}
+            </span>
         `;
 
+        // ✅ 仅最后一个篮子额外加 🗑 删除按钮
+        if (id === totalBaskets) {
+            const removeIcon = document.createElement("span");
+            removeIcon.className = "basket-remove";
+            removeIcon.textContent = "🗑";
+            removeIcon.setAttribute("data-tip", "删除最后一个篮子");
+            removeIcon.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                const confirmed = confirm(`确定要彻底删除 ${id} 号篮子吗？`);
+                if (!confirmed) return;
+                const res = await fetch("/sorting/api/basket", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({action: "remove"})
+                });
+                const json = await res.json();
+                if (json.success) await loadFromServer();
+                else alert("删除失败，请重试。");
+            });
+            div.appendChild(removeIcon);
+        }
+
+        // ✅ 禁用/恢复按钮逻辑
         const delBtn = div.querySelector(".basket-delete");
-        // 🟩【修改】增加存在性判断，防止最后一个篮子没有 delete 按钮时报错
         if (delBtn) {
-            if (basketState[id]?.deleted) delBtn.classList.add("restore");
+            // 如果篮子内有 SKU，则禁用按钮
+            if (basketState[id]?.sku) {
+                delBtn.classList.add("disabled");
+                delBtn.style.pointerEvents = "none";
+                delBtn.style.opacity = "0.5";
+            }
 
             delBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
@@ -94,25 +103,28 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        // 🆕【新增功能】：仅最后一个篮子绑定删除事件（右下角 🗑）
-        if (id === totalBaskets) {
-            const removeBtn = div.querySelector(".basket-remove");
-            if (removeBtn) {
-                removeBtn.addEventListener("click", async (e) => {
-                    e.stopPropagation();
-                    const confirmed = confirm(`确定要删除 ${id} 号篮子吗？`);
-                    if (!confirmed) return;
-                    const res = await fetch("/sorting/api/basket", {
-                        method: "POST",
-                        headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify({action: "remove"})
-                    });
-                    const json = await res.json();
-                    if (json.success) await loadFromServer();
-                    else alert("删除失败，请重试。");
-                });
-            }
-        }
+         // 🟩 新增：双击篮子清空 SKU 与数量
+    div.addEventListener("dblclick", async (e) => {
+        e.stopPropagation();
+        const confirmed = confirm(`确定要清空 ${id} 号篮子吗？`);
+        if (!confirmed) return;
+
+        // 清空前端状态
+        basketState[id].sku = null;
+        basketState[id].count = 0;
+
+        const numEl = div.querySelector(".basket-num");
+        if (numEl) numEl.textContent = "0";
+        div.classList.remove("has-sku");
+        div.title = "空篮子";
+
+        // 通知后端（保持风格一致）
+        await fetch("/sorting/api/basket_toggle", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({id, action: "clear"})
+        });
+    });
 
         return div;
     }
@@ -124,71 +136,64 @@ document.addEventListener("DOMContentLoaded", () => {
         addBtn.textContent = "+";
         addBtn.title = "添加新篮子";
         addBtn.addEventListener("click", async () => {
-            // 🔹后端交互：功能2 添加篮子
             await fetch("/sorting/api/basket", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({action: "add"})
             });
-            await loadFromServer(); // 重新加载最新数据
+            await loadFromServer();
         });
         basketList.appendChild(addBtn);
     }
 
-    // ✅ 删除 / 恢复切换
+    // ============================================================
+    // ✅ 删除 / 恢复切换逻辑（保持数量与 SKU）
+    // ============================================================
     async function handleToggleBasket(id) {
         const basket = basketState[id];
         const el = document.getElementById(`basket-${id}`);
         const btn = el.querySelector(".basket-delete");
 
-        // 🟩 新逻辑：如果删除的是最后一个篮子 -> 彻底删除，而不是置灰
-        if (!basket.deleted) {
-            const confirmed = confirm(`确定要删除 ${id} 号篮子吗？\n该篮子数量将被重置为 0。`);
-            if (!confirmed) return;
+        if (!basket || !btn) return;
 
-            // ✅ 如果是最后一个编号
-            if (id === totalBaskets) {
-                // 🔹后端交互：功能2 删除最后一个篮子
-                await fetch("/sorting/api/basket", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({action: "remove"})
-                });
-                await loadFromServer();
+        // 🟨 禁用逻辑
+        if (!basket.deleted) {
+            if (basket.sku) {
+                alert("此篮子内有SKU，无法禁用。");
                 return;
             }
+            const confirmed = confirm(`确定要禁用 ${id} 号篮子吗？`);
+            if (!confirmed) return;
 
-            // ✅ 其他篮子照旧置灰
             basket.deleted = true;
-            basket.count = 0;
             el.classList.add("deleted");
-            el.querySelector(".basket-num").textContent = "0";
             btn.textContent = "✔";
             btn.setAttribute("data-tip", "恢复篮子");
             btn.classList.add("restore");
 
-            // 🔹后端交互：功能3 删除中间篮子
             await fetch("/sorting/api/basket_toggle", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({id, action: "delete"})
             });
-        } else {
-            basket.deleted = false;
-            basket.count = 0;
-            el.classList.remove("deleted");
-            el.querySelector(".basket-num").textContent = "0";
-            btn.textContent = "×";
-            btn.setAttribute("data-tip", "删除篮子");
-            btn.classList.remove("restore");
-
-            // 🔹后端交互：功能3 恢复篮子
-            await fetch("/sorting/api/basket_toggle", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({id, action: "restore"})
-            });
+            return;
         }
+
+        // 🟩 恢复逻辑：保留数量与 SKU
+        const confirmed = confirm(`确定要恢复 ${id} 号篮子吗？`);
+        if (!confirmed) return;
+
+        basket.deleted = false;
+        el.classList.remove("deleted");
+        btn.textContent = "×";
+        btn.setAttribute("data-tip", "禁用篮子");
+        btn.classList.remove("restore");
+
+        await fetch("/sorting/api/basket_toggle", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({id, action: "restore"})
+        });
     }
 
     // ✅ 数量更新
@@ -223,12 +228,9 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             const json = await res.json();
 
-            // 🟩 新逻辑：篮子不够的情况（NO_EMPTY）
             if (!json.success && json.reason === "NO_EMPTY") {
                 msgBox.textContent = json.message;
                 msgBox.className = "form-message error";
-
-                // 🟩 语音提示
                 const msg = new SpeechSynthesisUtterance(json.message);
                 msg.lang = 'zh-CN';
                 msg.rate = 1.0;
@@ -241,20 +243,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // ✅ 原逻辑保持不变
-            // ✅ 原逻辑保持不变
             const randomId = json.basket;
 
-            // 🟩 新增：同步写入前端篮子状态里的 sku，用于 hover 显示
             basketState[randomId].sku = json.sku;
-
-            // 🟩 新增：立刻更新该篮子 div 的 title 提示
-            const el = document.getElementById(`basket-${randomId}`);
-            if (el) el.title = "SKU: " + json.sku;
-
             basketState[randomId].count++;
             updateBasketDisplay(randomId, basketState[randomId].count);
             flashBasket(randomId);
+
+            const el = document.getElementById(`basket-${randomId}`);
+            if (el) {
+                el.title = "SKU: " + json.sku;
+                el.classList.add("has-sku");
+                const delBtn = el.querySelector(".basket-delete");
+                if (delBtn) {
+                    delBtn.classList.add("disabled");
+                    delBtn.style.pointerEvents = "none";
+                    delBtn.style.opacity = "0.5";
+                }
+            }
 
             boxNumber.textContent = randomId;
             boxNumber.classList.add("flash");
@@ -265,7 +271,6 @@ document.addEventListener("DOMContentLoaded", () => {
             msgBox.className = "form-message success";
 
             renderHistoryFromServer(json.logs || []);
-
             const msg = new SpeechSynthesisUtterance(`${randomId} 号篮`);
             msg.lang = 'zh-CN';
             msg.rate = 1.05;
@@ -280,7 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ============================================================
-    // 🔹功能 4：重置篮子数量（后端同步）
+    // 🔹功能 4：重置篮子数量
     // ============================================================
     document.getElementById("resetBaskets").addEventListener("click", async () => {
         const confirmed = confirm("确定要重置所有篮子数量为 0 吗？");
@@ -291,31 +296,31 @@ document.addEventListener("DOMContentLoaded", () => {
         if (json.success) {
             for (const id in basketState) {
                 basketState[id].count = 0;
+                basketState[id].sku = null;
                 const el = document.getElementById(`basket-${id}`);
                 if (el) {
                     const num = el.querySelector(".basket-num");
                     if (num) num.textContent = "0";
+                    el.classList.remove("has-sku");
+                    el.title = "空篮子";
                 }
             }
             msgBox.textContent = json.message;
             msgBox.className = "form-message success";
+            await loadFromServer();
         }
     });
 
-    // ✅ 页面加载后执行：从后端加载真实数据
+    // ✅ 页面加载后执行
     loadFromServer();
 
-    // ✅ 输入框焦点控制（原逻辑保留）
+    // ✅ 输入框自动聚焦
     setInterval(() => {
-        if (document.activeElement !== skuInput) {
-            skuInput.focus();
-        }
+        if (document.activeElement !== skuInput) skuInput.focus();
     }, 1000);
 
     skuInput.addEventListener("focus", () => {
-        if (skuInput.value.length > 0) {
-            skuInput.select();
-        }
+        if (skuInput.value.length > 0) skuInput.select();
     });
 
     skuInput.addEventListener("blur", () => {
@@ -327,7 +332,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ============================================================
-// ✅ 最近分配记录（支持后端返回 logs）
+// ✅ 最近分配记录
 // ============================================================
 const historyList = document.getElementById("historyList");
 const historyData = [];
@@ -336,13 +341,11 @@ function updateHistory(sku, basketId) {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('zh-CN', {hour12: false});
     const record = `${timeStr} ｜ ${sku} → ${basketId}号篮`;
-
     historyData.unshift(record);
     if (historyData.length > 5) historyData.pop();
     renderHistory();
 }
 
-// 🔹后端返回日志时直接渲染
 function renderHistoryFromServer(logs) {
     historyList.innerHTML = logs.slice(0, 5)
         .map(item => `<li>${item.time} ｜ ${item.sku} → ${item.basket}号篮</li>`)
